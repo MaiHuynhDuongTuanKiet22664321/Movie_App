@@ -1,29 +1,31 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import * as React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import TabNavigator from '@/src/navigators/TabNavigator';
+import MovieDetailScreen from '@/src/screens/MovieDetailScreen';
+import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+const Stack = createNativeStackNavigator();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
-
+const Tablayout = () => {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="Tab"
+        component={TabNavigator}
+        options={{ animation: "default" }}
+      />
+      <Stack.Screen
+        name="MovieDetails"
+        component={MovieDetailScreen}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="SeatBooking"
+        component={SeatBookingScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+    </Stack.Navigator>
   );
-}
+};
+
+export default Tablayout;
