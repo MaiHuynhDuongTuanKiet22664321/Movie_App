@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState  } from "react";
 import {
   Text,
   View,
@@ -53,6 +53,7 @@ const HomeScreen = ({ navigation }: any) => {
     })();
   }, []);
 
+  
   const searchMoviesFuntion = () => {
     navigation.navigate("SearchScreen");
   };
@@ -123,12 +124,11 @@ const HomeScreen = ({ navigation }: any) => {
                   onPress={() =>
                     navigation.navigate("MovieDetails", { id: movie.id })
                   }
-                  cardWidth={width / 3}
-                  isFirst={index === 0}
-                  isLast={index === item.data.length - 1}
+                  cardWidth={width / 2 - SPACING.space_24}
                   title={movie.original_title}
                   imagePath={baseImagePath("w342", movie.poster_path)}
-                  shouldMarginateAtEnd={true}
+                  shouldMarginateAtEnd={false}
+                  shouldMarginateAround={true}
                 />
               )}
             />

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from '@/src/navigators/TabNavigator';
 import MovieDetailScreen from '@/src/screens/MovieDetailScreen';
 import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
+import SearchScreen from '@/src/screens/SearchScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -12,7 +13,6 @@ const Tablayout = () => {
       <Stack.Screen
         name="Tab"
         component={TabNavigator}
-        
         options={{ animation: "default" }}
       />
       <Stack.Screen
