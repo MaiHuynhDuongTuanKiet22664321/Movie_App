@@ -90,20 +90,22 @@ const HomeScreen = ({ navigation }: any) => {
               data={item.data}
               keyExtractor={(movie: any) => movie.id.toString()}
               horizontal
+              bounces={false}
+              snapToInterval={width * 0.7 + SPACING.space_36}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.containerGap36}
+              ListHeaderComponent={<View style={{ width: SPACING.space_28 }} />}
+              ListFooterComponent={<View style={{ width: SPACING.space_28 }} />}
               renderItem={({ item: movie, index }) => (
                 <MoviesCard
                   onPress={() =>
                     navigation.navigate("MovieDetails", { id: movie.id })
                   }
-                  cardWidth={width* 0.7}
-                  isFirst={index === 0}
-                  isLast={index === item.data.length - 1}
+                  cardWidth={width * 0.7}
                   title={movie.title}
                   imagePath={baseImagePath("w780", movie.poster_path)}
-                  shouldMarginateAtEnd={true}
-                  genre={movie.genre_ids.slice(1,4)} 
+                  shouldMarginateAtEnd={false}
+                  genre={movie.genre_ids.slice(1, 4)}
                   vote_average={movie.vote_average}
                   vote_count={movie.vote_count}
                 />
@@ -124,7 +126,7 @@ const HomeScreen = ({ navigation }: any) => {
                   cardWidth={width / 3}
                   isFirst={index === 0}
                   isLast={index === item.data.length - 1}
-                  title={movie.title}
+                  title={movie.original_title}
                   imagePath={baseImagePath("w342", movie.poster_path)}
                   shouldMarginateAtEnd={true}
                 />
