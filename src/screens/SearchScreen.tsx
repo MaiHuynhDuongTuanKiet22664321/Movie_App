@@ -8,14 +8,17 @@ import {
 } from "react-native";
 import { COLORS, SPACING } from "../theme/theme";
 import { baseImagePath, searchMovies } from "../api/apicall";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SubMoviesCard from "../components/SubMoviesCard";
 import InputHeader from "../components/InputHeader";
 
 const { width } = Dimensions.get("screen");
 
-const SearchScreen = ({ navigation }: any) => {
+const SearchScreen = ({ navigation, route }: any) => {
   const [searchList, setSearchList] = useState<any>([]);
+  const [initialQuery, setInitialQuery] = useState<string>(
+    route.params?.query || ""
+  );
 
   const searchMoviesFuntion = async (name: string) => {
     try {
@@ -27,6 +30,12 @@ const SearchScreen = ({ navigation }: any) => {
     }
   };
 
+  useEffect(() => {
+    if (initialQuery) {
+      searchMoviesFuntion(initialQuery);
+    }
+  }, [initialQuery]);
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -35,14 +44,21 @@ const SearchScreen = ({ navigation }: any) => {
         keyExtractor={(movie: any) => movie.id.toString()}
         bounces={false}
         numColumns={2}
+        showsVerticalScrollIndicator={false}
         columnWrapperStyle={{ justifyContent: "space-around" }}
         ListHeaderComponent={
           <View style={styles.inputHeaderContainer}>
-            <InputHeader searchFunction={searchMoviesFuntion} />
+            <InputHeader
+              searchFunction={(text) => {
+                setInitialQuery(text);
+                searchMoviesFuntion(text);
+              }}
+              defaultValue={initialQuery}
+            />
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyText}>
+          <View>
             <Text style={styles.emptyText}>Nhập tên phim để tìm kiếm</Text>
           </View>
         }
@@ -86,7 +102,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
   },
-  centerContainer:{
-    alignContent: 'center',
-  }
+  centerContainer: {
+    alignContent: "center",
+  },
 });

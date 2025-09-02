@@ -7,7 +7,7 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 
 const genreList: Record<number, string> = {
   28: "Action",
@@ -83,7 +83,7 @@ const MoviesCard = ({
           }}
         />
         <View style={styles.rateContainer}>
-          <Ionicons name="star" style={styles.starIcon} />
+          <FontAwesome6 name="star" style={styles.starIcon} />
           <Text style={styles.voteText}>
             {vote_average} ({vote_count})
           </Text>

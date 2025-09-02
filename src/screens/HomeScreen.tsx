@@ -1,11 +1,9 @@
-import { useEffect, useState  } from "react";
+import { useEffect, useState } from "react";
 import {
-  Text,
   View,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
-  StatusBar,
   FlatList,
 } from "react-native";
 import { COLORS, SPACING } from "../theme/theme";
@@ -53,9 +51,8 @@ const HomeScreen = ({ navigation }: any) => {
     })();
   }, []);
 
-  
-  const searchMoviesFuntion = () => {
-    navigation.navigate("SearchScreen");
+  const searchMoviesFuntion = (text: string) => {
+    navigation.navigate("SearchScreen", { query: text });
   };
 
   if (!nowPlayMoviesList || !popularMoviesList || !upComingMoviesList) {
@@ -66,7 +63,6 @@ const HomeScreen = ({ navigation }: any) => {
     );
   }
 
-  // dữ liệu cho FlatList cha
   const sections = [
     { title: "Now Playing", data: nowPlayMoviesList },
     { title: "Popular Movies", data: popularMoviesList },
@@ -92,12 +88,13 @@ const HomeScreen = ({ navigation }: any) => {
               keyExtractor={(movie: any) => movie.id.toString()}
               horizontal
               bounces={false}
+              showsVerticalScrollIndicator={false}
               snapToInterval={width * 0.7 + SPACING.space_36}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.containerGap36}
               ListHeaderComponent={<View style={{ width: SPACING.space_28 }} />}
               ListFooterComponent={<View style={{ width: SPACING.space_28 }} />}
-              renderItem={({ item: movie, index }) => (
+              renderItem={({ item: movie }) => (
                 <MoviesCard
                   onPress={() =>
                     navigation.navigate("MovieDetails", { id: movie.id })
@@ -117,9 +114,10 @@ const HomeScreen = ({ navigation }: any) => {
               data={item.data}
               keyExtractor={(movie: any) => movie.id.toString()}
               horizontal
+              showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.containerGap36}
-              renderItem={({ item: movie, index }) => (
+              renderItem={({ item: movie }) => (
                 <SubMoviesCard
                   onPress={() =>
                     navigation.navigate("MovieDetails", { id: movie.id })

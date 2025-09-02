@@ -25,6 +25,16 @@ const Tablayout = () => {
         component={SeatBookingScreen}
         options={{ animation: "slide_from_bottom" }}
       />
+      <Stack.Screen
+        name="SearchScreen"
+        component={SearchScreen}
+        options={{
+          animation: "slide_from_right",
+          headerShown: true,
+          title: "Search",
+          
+        }}
+      />
     </Stack.Navigator>
   );
 };

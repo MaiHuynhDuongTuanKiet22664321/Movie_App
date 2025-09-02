@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TextInput, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { BORDER_RADIUS, COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 interface InputHeaderProps {
   searchFunction: (text: string) => void;
+  defaultValue?: string;
 }
 
-const InputHeader = ({ searchFunction }: InputHeaderProps) => {
-  const [searchText, setSearchText] = useState('');
+const InputHeader = ({ searchFunction, defaultValue = "" }: InputHeaderProps) => {
+  const [searchText, setSearchText] = useState(defaultValue);
+
+  useEffect(() => {
+    setSearchText(defaultValue);
+  }, [defaultValue]);
 
   return (
     <View style={styles.inputBox}>
@@ -18,6 +23,7 @@ const InputHeader = ({ searchFunction }: InputHeaderProps) => {
         value={searchText}
         placeholder="Search your Movies..."
         placeholderTextColor={COLORS.Grey}
+        onSubmitEditing={() => searchFunction(searchText)}
       />
       <TouchableOpacity onPress={() => searchFunction(searchText)}>
         <Ionicons
@@ -41,10 +47,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.WhiteRGBA10,
     borderRadius: BORDER_RADIUS.radius_15,
     flexDirection: 'row',
-    alignItems: 'center', // thêm để icon canh giữa input
+    alignItems: 'center',
   },
   textInput: {
-    flex: 1, // thay width 90% bằng flex
+    flex: 1,
     fontFamily: FONT_FAMILY.poppins_regular,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
