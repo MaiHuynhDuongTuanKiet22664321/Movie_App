@@ -12,6 +12,7 @@ const Tablayout = () => {
       <Stack.Screen
         name="Tab"
         component={TabNavigator}
+        
         options={{ animation: "default" }}
       />
       <Stack.Screen

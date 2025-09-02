@@ -1,32 +1,43 @@
-import React from "react";
-import {StyleSheet,View} from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "../screens/HomeScreen";
-import SearchScreen from "../screens/SearchScreen";
-import TicketScreen from "../screens/TicketScreen";
-import UserAccountScreen from "../screens/UserAccountScreen";
-import { COLORS, SPACING ,FONT_SIZE } from "../theme/theme";
-import { Ionicons, Entypo} from "@expo/vector-icons";
+import React from 'react';
+import HomeScreen from '../screens/HomeScreen';
+import SearchScreen from '../screens/SearchScreen';
+import TicketScreen from '../screens/TicketScreen';
+import UserAccountScreen from '../screens/UserAccountScreen';
+import { COLORS, FONT_SIZE, SPACING } from '../theme/theme';
+import { Ionicons, Entypo } from "@expo/vector-icons";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { View, StyleSheet, Text } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useFonts } from 'expo-font';
 
 
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+const TabNavigator = () => {
+  // ✅ preload font
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+    ...Entypo.font,
+    ...MaterialIcons.font,
+  });
+
+  if (!fontsLoaded) {
+    // Có thể return SplashScreen hoặc Loading
+    return <Text style={{color: 'white', textAlign: 'center', marginTop: 50}}>Loading...</Text>;
+  }
+
   return (
     <Tab.Navigator
       screenOptions={{
+        tabBarHideOnKeyboard: true,
         headerShown: false,
-        tabBarShowLabel: false,
-        tabBarHideOnKeyboard: true, // tắt khi chạm vào ô keyboard
-        tabBarActiveTintColor: "#e50914", // màu khi chọn (Netflix style)
-        tabBarInactiveTintColor: "gray", // màu khi chưa chọn
         tabBarStyle: {
           backgroundColor: COLORS.Black,
-          borderTopWidth: 0, // xóa kẻ trên
-          height: SPACING.space_8*8,// chiều cao của tab bar
+          borderTopWidth: 0,
+          height: SPACING.space_10 * 8,
           flexDirection: "row",
           alignItems: "center",
-
+          justifyContent: "center",
         },
       }}
     >
@@ -34,66 +45,95 @@ export default function TabNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: "Home",
-          tabBarIcon: ({ focused,color, size }) => {
-            return (
-              <View style={focused  ? styles.activeTabBackground : ""}>
-                <Entypo name="video" size={FONT_SIZE.size_30} color={COLORS.White} />
-              </View>
-            );
-          },
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Orange } : {},
+              ]}
+            >
+              <Entypo
+                name="home"
+                size={FONT_SIZE.size_28}
+                color={COLORS.White}
+              />
+            </View>
+          ),
         }}
       />
       <Tab.Screen
         name="Search"
         component={SearchScreen}
         options={{
-          title: "Search",
-          tabBarIcon: ({ focused,color, size }) => {
-            return (
-              <View style={focused  ? styles.activeTabBackground : ""}>
-                <Ionicons name="search-outline" size={FONT_SIZE.size_30} color={COLORS.White} />
-              </View>
-            );
-          },
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Orange } : {},
+              ]}
+            >
+              <Ionicons
+                name="search"
+                color={COLORS.White}
+                size={FONT_SIZE.size_28}
+              />
+            </View>
+          ),
         }}
       />
       <Tab.Screen
         name="Ticket"
         component={TicketScreen}
         options={{
-          title: "Ticket",
-          tabBarIcon: ({ focused,color, size }) => {
-            return (
-              <View style={focused  ? styles.activeTabBackground : ""}>
-                <Ionicons name="ticket-outline" size={FONT_SIZE.size_30} color={COLORS.White} />
-              </View>
-            );
-          },
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Orange } : {},
+              ]}
+            >
+              <Ionicons
+                name="ticket"
+                color={COLORS.White}
+                size={FONT_SIZE.size_28}
+              />
+            </View>
+          ),
         }}
       />
       <Tab.Screen
         name="User"
         component={UserAccountScreen}
         options={{
-          title: "User",
-          tabBarIcon: ({ focused,color, size }) => {
-            return (
-              <View style={focused  ? styles.activeTabBackground : ""}>
-                <Ionicons name="person-outline" size={FONT_SIZE.size_30} color={COLORS.White} />
-              </View>
-            );
-          },
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Orange } : {},
+              ]}
+            >
+              <Ionicons
+                name="person-circle"
+                color={COLORS.White}
+                size={FONT_SIZE.size_28}
+              />
+            </View>
+          ),
         }}
       />
     </Tab.Navigator>
   );
-}
+};
 
 const styles = StyleSheet.create({
   activeTabBackground: {
-    backgroundColor: COLORS.Orange,
-    padding: SPACING.space_12,
-    borderRadius: SPACING.space_16*16,
+    padding: SPACING.space_18,
+    borderRadius: SPACING.space_18 * 10,
   },
 });
+
+export default TabNavigator;

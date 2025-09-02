@@ -6,8 +6,11 @@ interface Spacing{
     space_10:number;
     space_12:number;
     space_16:number;
+    space_18:number;
     space_24:number;
+    space_28:number;
     space_32:number;
+    space_36:number;
     space_48:number;
     space_64:number;
     space_96:number;
@@ -28,8 +31,11 @@ export const SPACING: Spacing = {
     space_10: 10,
     space_12: 12,
     space_16: 16,
+    space_18: 18,
     space_24: 24,
+    space_28: 28,
     space_32: 32,
+    space_36: 36,
     space_48: 48,
     space_64: 64,
     space_96: 96,
@@ -63,6 +69,7 @@ interface Color {
   WhiteRGBA05:string;
   WhiteRGBA025:string;
   WhiteRGBA0125:string;
+  WhiteRGBA32:string;
 }
 
 export const COLORS: Color = {
@@ -85,6 +92,7 @@ export const COLORS: Color = {
   WhiteRGBA05: 'rgba(255, 255, 255, 0.005)',
   WhiteRGBA025: 'rgba(255, 255, 255, 0.0025)',
   WhiteRGBA0125: 'rgba(255, 255, 255, 0.00125)',
+  WhiteRGBA32: 'rgba(255, 255, 255, 0.032)',
 };
 
 
@@ -168,6 +176,7 @@ interface FontFamily {
     radius_4:number;
     radius_8:number;
     radius_12:number;
+    radius_15:number;
     radius_16:number;
     radius_20:number;
     radius_24:number;
@@ -191,6 +200,7 @@ interface FontFamily {
     radius_4: 4,
     radius_8: 8,
     radius_12: 12,
+    radius_15: 15,
     radius_16: 16,
     radius_20: 20,
     radius_24: 24,
