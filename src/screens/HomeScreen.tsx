@@ -52,7 +52,7 @@ const HomeScreen = ({ navigation }: any) => {
   }, []);
 
   const searchMoviesFuntion = (text: string) => {
-    navigation.navigate("SearchScreen", { query: text });
+    navigation.navigate("Search", { query: text });
   };
 
   if (!nowPlayMoviesList || !popularMoviesList || !upComingMoviesList) {

@@ -1,31 +1,18 @@
-import React from 'react';
-import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import TicketScreen from '../screens/TicketScreen';
-import UserAccountScreen from '../screens/UserAccountScreen';
-import { COLORS, FONT_SIZE, SPACING } from '../theme/theme';
-import { Ionicons, Entypo } from "@expo/vector-icons";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { View, StyleSheet, Text } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useFonts } from 'expo-font';
-
+import { Ionicons } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Fontisto from "@expo/vector-icons/Fontisto";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import HomeScreen from "../screens/HomeScreen";
+import SearchScreen from "../screens/SearchScreen";
+import TicketScreen from "../screens/TicketScreen";
+import UserAccountScreen from "../screens/UserAccountScreen";
+import { COLORS, FONT_SIZE, SPACING } from "../theme/theme";
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
-  // ✅ preload font
-  const [fontsLoaded] = useFonts({
-    ...Ionicons.font,
-    ...Entypo.font,
-    ...MaterialIcons.font,
-  });
-
-  if (!fontsLoaded) {
-    // Có thể return SplashScreen hoặc Loading
-    return <Text style={{color: 'white', textAlign: 'center', marginTop: 50}}>Loading...</Text>;
-  }
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -53,10 +40,10 @@ const TabNavigator = () => {
                 focused ? { backgroundColor: COLORS.Orange } : {},
               ]}
             >
-              <Entypo
-                name="home"
-                size={FONT_SIZE.size_28}
-                color={COLORS.White}
+              <MaterialCommunityIcons
+                name="movie-open-play"
+                size={24}
+                color="white"
               />
             </View>
           ),
@@ -95,11 +82,7 @@ const TabNavigator = () => {
                 focused ? { backgroundColor: COLORS.Orange } : {},
               ]}
             >
-              <Ionicons
-                name="ticket"
-                color={COLORS.White}
-                size={FONT_SIZE.size_28}
-              />
+              <Fontisto name="ticket" size={28} color="white" />
             </View>
           ),
         }}
@@ -131,6 +114,7 @@ const TabNavigator = () => {
 
 const styles = StyleSheet.create({
   activeTabBackground: {
+    
     padding: SPACING.space_18,
     borderRadius: SPACING.space_18 * 10,
   },

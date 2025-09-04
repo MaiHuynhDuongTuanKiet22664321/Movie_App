@@ -4,11 +4,15 @@ import TabNavigator from '@/src/navigators/TabNavigator';
 import MovieDetailScreen from '@/src/screens/MovieDetailScreen';
 import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
 import SearchScreen from '@/src/screens/SearchScreen';
+import TicketScreen from '@/src/screens/TicketScreen';
+
+import Toast from 'react-native-toast-message';
 
 const Stack = createNativeStackNavigator();
 
 const Tablayout = () => {
   return (
+    <>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="Tab"
@@ -25,17 +29,9 @@ const Tablayout = () => {
         component={SeatBookingScreen}
         options={{ animation: "slide_from_bottom" }}
       />
-      <Stack.Screen
-        name="SearchScreen"
-        component={SearchScreen}
-        options={{
-          animation: "slide_from_right",
-          headerShown: true,
-          title: "Search",
-          
-        }}
-      />
     </Stack.Navigator>
+    <Toast />
+    </>
   );
 };
 

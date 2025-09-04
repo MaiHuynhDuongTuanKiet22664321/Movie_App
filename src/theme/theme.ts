@@ -75,7 +75,7 @@ interface Color {
 export const COLORS: Color = {
   Black: "#000000",
   BlackRGB10: 'rgba(0, 0, 0, 0.1)',
-  Orange: "#f87942ff",
+  Orange: "#f35714ff",
   OrangeRGBBA0: 'rgba(255, 165, 0, 0.1)',
   Grey: "#808080",
   DarkGrey: "#A9A9A9",

@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: SPACING.space_24,
     paddingVertical: 20,
-    backgroundColor: COLORS.Black, // tuỳ bạn muốn để màu gì
+    backgroundColor: COLORS.Black, 
   },
   text: {
     fontSize: FONT_SIZE.size_20,

@@ -25,6 +25,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import CategoryHeader from "../components/CategogyHeader";
 import CastCard from "../components/CastCard";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const getMovieDetails = async (id: number) => {
   try {
@@ -156,27 +157,29 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
           <Text style={styles.descriptionText}>{movieData?.overview}</Text>
         </View>
 
-        <View>
+        <View style={styles.castContainer}>
           <CategoryHeader title="Top Cast" />
           <FlatList
             data={movieCastData}
             keyExtractor={(item: any) => item.id}
             horizontal
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.containerGap24}
             renderItem={({ item, index }) => (
               <CastCard
                 shouldMarginatedAtEnd={true}
                 cardWidth={80}
-                isFirst={index === 0 }
-                isLast={index === movieCastData?.length - 1 }
+                isFirst={index === 0}
+                isLast={index === movieCastData?.length - 1}
                 imagePath={baseImagePath("w185", item.profile_path)}
                 title={item.original_name}
                 subtitle={item.character}
               />
             )}
           />
-
-          <View>
+        </View>
+      </ScrollView>
+      <View>
             <TouchableOpacity
               style={styles.buttonBG}
               onPress={() => {
@@ -186,11 +189,10 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
                 });
               }}
             >
+              <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
               <Text style={styles.buttonText}>Select Seats</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -304,17 +306,35 @@ const styles = StyleSheet.create({
   containerGap24: {
     gap: SPACING.space_24,
   },
+  ticketIcon:{
+    fontSize: FONT_SIZE.size_24,
+    color: COLORS.White,
+    paddingHorizontal: SPACING.space_4,
+    paddingVertical: SPACING.space_4,
+  },
   buttonBG: {
+    position: "absolute",
+    bottom: 20, // cách mép dưới 20px
+    left: "50%",
+    transform: [{ translateX: -75 }], // căn giữa (nếu width ~150)
+    backgroundColor: COLORS.Orange,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 30,
+    flexDirection: "row",
     alignItems: "center",
-    marginVertical: SPACING.space_24,
+    justifyContent: "center",
   },
   buttonText: {
     borderRadius: BORDER_RADIUS.radius_24 * 2,
-    paddingHorizontal: SPACING.space_24,
-    paddingVertical: SPACING.space_10,
+    paddingHorizontal: SPACING.space_4,
+    paddingVertical: SPACING.space_4,
     backgroundColor: COLORS.Orange,
     fontFamily: FONT_FAMILY.poppins_medium,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
   },
+  castContainer:{
+    marginBottom: SPACING.space_96
+  }
 });
