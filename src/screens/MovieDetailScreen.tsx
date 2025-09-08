@@ -186,6 +186,7 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
                 navigation.push("SeatBooking", {
                   BgImage: baseImagePath("w780", movieData.backdrop_path),
                   PosterImage: baseImagePath("original", movieData.poster_path),
+                  nameMovie: movieData.original_title,
                 });
               }}
             >

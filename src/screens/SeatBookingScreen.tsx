@@ -18,12 +18,13 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
+import * as SecureStore from "expo-secure-store";
 import MovieDetailsHeader from "../components/MovieDetailsHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import * as SecureStore from "expo-secure-store";
 import Toast from "react-native-toast-message";
 import Svg, { Path, Defs, ClipPath, Image as SvgImage } from "react-native-svg";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const timeArray = [
   "10:30",
@@ -38,8 +39,8 @@ const timeArray = [
 
 const { width } = Dimensions.get("window");
 const height = 260; // chiều cao banner
-const bottomCurveHeight = 60; // độ cong
-const topCurveHeight = 60;
+const bottomCurveHeight = 50; // độ cong
+const topCurveHeight = 50;
 
 const generateDates = () => {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -90,43 +91,47 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
 
   const BookSeats = async () => {
-    if (
-      selectedSeatArray.length !== 0 &&
-      timeArray[selectedTimeIndex] !== undefined &&
-      dateArray[selectedDateIndex] !== undefined
-    ) {
-      try {
-        await SecureStore.setItemAsync(
-          "ticket",
-          JSON.stringify({
-            seatArray: selectedSeatArray,
-            time: timeArray[selectedTimeIndex],
-            date: dateArray[selectedDateIndex],
-            ticketImage: route.params.PosterImage,
-          })
-        );
-      } catch (error) {
-        console.error(
-          "Something went Wrong while storing in BookSeats Functions",
-          error
-        );
-      }
-      navigation.navigate("Tab", {
-        screen: "Ticket",
-        params: {
+  if (
+    selectedSeatArray.length !== 0 &&
+    timeArray[selectedTimeIndex] !== undefined &&
+    dateArray[selectedDateIndex] !== undefined
+  ) {
+    try {
+      // Lưu vé vào SecureStore
+      await SecureStore.setItemAsync(
+        "ticket",
+        JSON.stringify({
           seatArray: selectedSeatArray,
           time: timeArray[selectedTimeIndex],
           date: dateArray[selectedDateIndex],
-          ticketImage: route.params.PosterImage,
-        },
-      });
-    } else {
-      Toast.show({
-        type: "error", // 'success' | 'info' | 'error'
-        text1: "Please Select Seats, Date and Time of the Show",
-      });
+          PosterImage: route.params.PosterImage,
+          price: price,
+        })
+      );
+    } catch (error) {
+      console.error(
+        "Something went Wrong while storing in BookSeats Functions",
+        error
+      );
     }
-  };
+
+    // Điều hướng sang Payment + gửi params
+    navigation.navigate("Payment", {
+      seatArray: selectedSeatArray,
+      time: timeArray[selectedTimeIndex],
+      date: dateArray[selectedDateIndex],
+      PosterImage: route.params.PosterImage,
+      nameMovie: route.params.nameMovie,
+      price: price,
+    });
+  } else {
+    Toast.show({
+      type: "error",
+      text1: "Please Select Seats, Date and Time of the Show",
+    });
+  }
+};
+
   const selectedSeatArr = (index: number, subIndex: number, num: number) => {
     if (!twoDSeatArray[index][subIndex].taken) {
       let array: any = [...selectedSeatArray];
@@ -176,7 +181,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
               <SvgImage
                 width={width}
                 height={height}
-                preserveAspectRatio="xMidYMin slice"
+                preserveAspectRatio="xMidYMid slice"
                 href={{ uri: route.params.PosterImage }}
                 clipPath="url(#clip)"
               />
@@ -345,6 +350,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             <Text style={styles.price}>$ {price}.00</Text>
           </View>
           <TouchableOpacity onPress={BookSeats} style={styles.buttonBookSeat}>
+            <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
             <Text style={styles.buttonText}>Buy Tickets</Text>
           </TouchableOpacity>
         </View>
@@ -426,8 +432,9 @@ const styles = StyleSheet.create({
   dateContainer: {
     width: SPACING.space_10 * 6,
     height: SPACING.space_10 * 8,
+    borderColor: COLORS.WhiteRGBA5,
     borderRadius: SPACING.space_10 * 2,
-    backgroundColor: COLORS.DarkGrey,
+    backgroundColor: COLORS.BlackRGB5,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -447,10 +454,10 @@ const styles = StyleSheet.create({
   timeContainer: {
     paddingVertical: SPACING.space_10,
     borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA50,
+    borderColor: COLORS.BlackRGB5,
     paddingHorizontal: SPACING.space_10 * 2,
     borderRadius: BORDER_RADIUS.radius_20,
-    backgroundColor: COLORS.DarkGrey,
+    backgroundColor: COLORS.BlackRGB5,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -480,10 +487,11 @@ const styles = StyleSheet.create({
     color: COLORS.White,
   },
   buttonBookSeat: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: BORDER_RADIUS.radius_24,
-    paddingHorizontal: SPACING.space_10 * 2,
+    paddingHorizontal: SPACING.space_10 ,
     paddingVertical: SPACING.space_10,
     backgroundColor: COLORS.Orange,
   },
@@ -495,5 +503,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
     backgroundColor: COLORS.Orange,
+  },
+  ticketIcon:{
+    fontSize: FONT_SIZE.size_24,
+    color: COLORS.White,
+    paddingHorizontal: SPACING.space_4,
+    paddingVertical: SPACING.space_4,
   },
 });

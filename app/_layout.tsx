@@ -5,6 +5,7 @@ import MovieDetailScreen from '@/src/screens/MovieDetailScreen';
 import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
 import SearchScreen from '@/src/screens/SearchScreen';
 import TicketScreen from '@/src/screens/TicketScreen';
+import PaymentScreen from '@/src/screens/PaymentScreen';
 
 import Toast from 'react-native-toast-message';
 
@@ -27,6 +28,11 @@ const Tablayout = () => {
       <Stack.Screen
         name="SeatBooking"
         component={SeatBookingScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="Payment"
+        component={PaymentScreen}
         options={{ animation: "slide_from_bottom" }}
       />
     </Stack.Navigator>
