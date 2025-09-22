@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Text,
   View,
   StyleSheet,
   ScrollView,
   StatusBar,
-  ImageBackground,
   TouchableOpacity,
   FlatList,
   Dimensions,
@@ -23,8 +22,8 @@ import MovieDetailsHeader from "../components/MovieDetailsHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Toast from "react-native-toast-message";
-import Svg, { Path, Defs, ClipPath, Image as SvgImage } from "react-native-svg";
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Svg, { Defs, ClipPath, Image as SvgImage } from "react-native-svg";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const timeArray = [
   "10:30",
@@ -86,51 +85,55 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const [dateArray, setdateArray] = useState<any>(generateDates());
   const [selectedDateIndex, setSelectedDateIndex] = useState<any>();
   const [price, setPrice] = useState<number>(0);
-  const [twoDSeatArray, setTwoDSeatArray] = useState<any>(generateSeats());
+  const [twoDSeatArray, setTwoDSeatArray] = useState<any>();
   const [selectedSeatArray, setSelectedSeatArray] = useState<any>([]);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
+  const checkSelectedDateTime = useMemo(() => {
+    setTwoDSeatArray(generateSeats());
+    return selectedDateIndex !== undefined && selectedTimeIndex !== undefined;
+  }, [selectedDateIndex, selectedTimeIndex]);
 
   const BookSeats = async () => {
-  if (
-    selectedSeatArray.length !== 0 &&
-    timeArray[selectedTimeIndex] !== undefined &&
-    dateArray[selectedDateIndex] !== undefined
-  ) {
-    try {
-      // Lưu vé vào SecureStore
-      await SecureStore.setItemAsync(
-        "ticket",
-        JSON.stringify({
-          seatArray: selectedSeatArray,
-          time: timeArray[selectedTimeIndex],
-          date: dateArray[selectedDateIndex],
-          PosterImage: route.params.PosterImage,
-          price: price,
-        })
-      );
-    } catch (error) {
-      console.error(
-        "Something went Wrong while storing in BookSeats Functions",
-        error
-      );
-    }
+    if (
+      selectedSeatArray.length !== 0 &&
+      timeArray[selectedTimeIndex] !== undefined &&
+      dateArray[selectedDateIndex] !== undefined
+    ) {
+      try {
+        // Lưu vé vào SecureStore
+        await SecureStore.setItemAsync(
+          "ticket",
+          JSON.stringify({
+            seatArray: selectedSeatArray,
+            time: timeArray[selectedTimeIndex],
+            date: dateArray[selectedDateIndex],
+            PosterImage: route.params.PosterImage,
+            price: price,
+          })
+        );
+      } catch (error) {
+        console.error(
+          "Something went Wrong while storing in BookSeats Functions",
+          error
+        );
+      }
 
-    // Điều hướng sang Payment + gửi params
-    navigation.navigate("Payment", {
-      seatArray: selectedSeatArray,
-      time: timeArray[selectedTimeIndex],
-      date: dateArray[selectedDateIndex],
-      PosterImage: route.params.PosterImage,
-      nameMovie: route.params.nameMovie,
-      price: price,
-    });
-  } else {
-    Toast.show({
-      type: "error",
-      text1: "Please Select Seats, Date and Time of the Show",
-    });
-  }
-};
+      // Điều hướng sang Payment + gửi params
+      navigation.navigate("Payment", {
+        seatArray: selectedSeatArray,
+        time: timeArray[selectedTimeIndex],
+        date: dateArray[selectedDateIndex],
+        PosterImage: route.params.PosterImage,
+        nameMovie: route.params.nameMovie,
+        price: price,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Please Select Seats, Date and Time of the Show",
+      });
+    }
+  };
 
   const selectedSeatArr = (index: number, subIndex: number, num: number) => {
     if (!twoDSeatArray[index][subIndex].taken) {
@@ -201,159 +204,170 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             </LinearGradient>
           </View>
 
-          {/* Nội dung bên dưới */}
+          <View>
+            <FlatList
+              data={dateArray}
+              keyExtractor={(item) => item.date}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.containerGap24}
+              renderItem={({ item, index }) => {
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedDateIndex(index);
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.dateContainer,
+                        index === 0
+                          ? { marginLeft: SPACING.space_24 }
+                          : index === dateArray.length - 1
+                          ? { marginRight: SPACING.space_24 }
+                          : {},
+
+                        selectedDateIndex === index
+                          ? { backgroundColor: COLORS.Orange }
+                          : {},
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dateText,
+                          selectedDateIndex === index
+                            ? { color: COLORS.White }
+                            : {},
+                        ]}
+                      >
+                        {item.date}
+                      </Text>
+                      <Text style={styles.dayText}>{item.day}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+
+          <View style={styles.OutterContainer}>
+            <FlatList
+              data={timeArray}
+              keyExtractor={(item) => item}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.containerGap24}
+              renderItem={({ item, index }) => {
+                return (
+                  <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
+                    <View
+                      style={[
+                        styles.timeContainer,
+                        index === 0
+                          ? { marginLeft: SPACING.space_24 }
+                          : index === timeArray.length - 1
+                          ? { marginRight: SPACING.space_24 }
+                          : {},
+                        index === selectedTimeIndex
+                          ? { backgroundColor: COLORS.Orange }
+                          : {},
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.timeText,
+                          selectedTimeIndex === index
+                            ? { color: COLORS.White }
+                            : {},
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
           <Text style={styles.screenText}>Screen this side</Text>
         </View>
-        <View style={styles.seatContainer}>
-          <View style={styles.containerGap20}>
-            {twoDSeatArray.map((item: any, index: number) => {
-              return (
-                <View key={index} style={styles.seatRow}>
-                  {item?.map((subItem: any, subIndex: number) => {
-                    return (
-                      <TouchableOpacity
-                        key={subIndex}
-                        onPress={() => {
-                          selectedSeatArr(index, subIndex, subItem.number);
-                        }}
-                      >
-                        <MaterialIcons
-                          name="event-seat"
-                          style={[
-                            styles.seatIcon,
-                            subItem.taken ? { color: COLORS.Grey } : {},
-                            subItem.selected ? { color: COLORS.Orange } : {},
-                          ]}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
+        {checkSelectedDateTime && (
+          <>
+            <View style={styles.seatContainer}>
+              <View style={styles.containerGap20}>
+                {twoDSeatArray.map((item: any, index: number) => {
+                  return (
+                    <View key={index} style={styles.seatRow}>
+                      {item?.map((subItem: any, subIndex: number) => {
+                        return (
+                          <TouchableOpacity
+                            key={subIndex}
+                            onPress={() => {
+                              selectedSeatArr(index, subIndex, subItem.number);
+                            }}
+                          >
+                            <MaterialIcons
+                              name="event-seat"
+                              style={[
+                                styles.seatIcon,
+                                subItem.taken ? { color: COLORS.Grey } : {},
+                                subItem.selected
+                                  ? { color: COLORS.Orange }
+                                  : {},
+                              ]}
+                            />
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
+              <View style={styles.seatRadioContainer}>
+                <View style={styles.radioContainer}>
+                  <MaterialIcons
+                    name="radio-button-on"
+                    style={[styles.radioIcon]}
+                  />
+                  <Text style={styles.radioText}>Available</Text>
                 </View>
-              );
-            })}
-          </View>
-          <View style={styles.seatRadioContainer}>
-            <View style={styles.radioContainer}>
-              <MaterialIcons
-                name="radio-button-on"
-                style={[styles.radioIcon]}
-              />
-              <Text style={styles.radioText}>Available</Text>
+
+                <View style={styles.radioContainer}>
+                  <MaterialIcons
+                    name="radio-button-on"
+                    style={[styles.radioIcon, { color: COLORS.Grey }]}
+                  />
+                  <Text style={styles.radioText}>Taken</Text>
+                </View>
+
+                <View style={styles.radioContainer}>
+                  <MaterialIcons
+                    name="radio-button-on"
+                    style={[styles.radioIcon, { color: COLORS.Orange }]}
+                  />
+                  <Text style={styles.radioText}>Selected</Text>
+                </View>
+              </View>
             </View>
-
-            <View style={styles.radioContainer}>
-              <MaterialIcons
-                name="radio-button-on"
-                style={[styles.radioIcon, { color: COLORS.Grey }]}
-              />
-              <Text style={styles.radioText}>Taken</Text>
+            <View style={styles.buttonPriceContainer}>
+              <View style={styles.priceContainer}>
+                <Text style={styles.totalPriceText}>Total Price</Text>
+                <Text style={styles.price}>$ {price}.00</Text>
+              </View>
+              <TouchableOpacity
+                onPress={BookSeats}
+                style={styles.buttonBookSeat}
+              >
+                <MaterialCommunityIcons
+                  name="ticket"
+                  style={styles.ticketIcon}
+                />
+                <Text style={styles.buttonText}>Buy Tickets</Text>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.radioContainer}>
-              <MaterialIcons
-                name="radio-button-on"
-                style={[styles.radioIcon, { color: COLORS.Orange }]}
-              />
-              <Text style={styles.radioText}>Selected</Text>
-            </View>
-          </View>
-        </View>
-        <View>
-          <FlatList
-            data={dateArray}
-            keyExtractor={(item) => item.date}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.containerGap24}
-            renderItem={({ item, index }) => {
-              return (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedDateIndex(index);
-                  }}
-                >
-                  <View
-                    style={[
-                      styles.dateContainer,
-                      index === 0
-                        ? { marginLeft: SPACING.space_24 }
-                        : index === dateArray.length - 1
-                        ? { marginRight: SPACING.space_24 }
-                        : {},
-
-                      selectedDateIndex === index
-                        ? { backgroundColor: COLORS.Orange }
-                        : {},
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dateText,
-                        selectedDateIndex === index
-                          ? { color: COLORS.White }
-                          : {},
-                      ]}
-                    >
-                      {item.date}
-                    </Text>
-                    <Text style={styles.dayText}>{item.day}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-
-        <View style={styles.OutterContainer}>
-          <FlatList
-            data={timeArray}
-            keyExtractor={(item) => item}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            bounces={false}
-            contentContainerStyle={styles.containerGap24}
-            renderItem={({ item, index }) => {
-              return (
-                <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
-                  <View
-                    style={[
-                      styles.timeContainer,
-                      index === 0
-                        ? { marginLeft: SPACING.space_24 }
-                        : index === timeArray.length - 1
-                        ? { marginRight: SPACING.space_24 }
-                        : {},
-                      index === selectedTimeIndex
-                        ? { backgroundColor: COLORS.Orange }
-                        : {},
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.timeText,
-                        selectedTimeIndex === index
-                          ? { color: COLORS.White }
-                          : {},
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-        <View style={styles.buttonPriceContainer}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.totalPriceText}>Total Price</Text>
-            <Text style={styles.price}>$ {price}.00</Text>
-          </View>
-          <TouchableOpacity onPress={BookSeats} style={styles.buttonBookSeat}>
-            <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
-            <Text style={styles.buttonText}>Buy Tickets</Text>
-          </TouchableOpacity>
-        </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -491,7 +505,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: BORDER_RADIUS.radius_24,
-    paddingHorizontal: SPACING.space_10 ,
+    paddingHorizontal: SPACING.space_10,
     paddingVertical: SPACING.space_10,
     backgroundColor: COLORS.Orange,
   },
@@ -504,7 +518,7 @@ const styles = StyleSheet.create({
     color: COLORS.White,
     backgroundColor: COLORS.Orange,
   },
-  ticketIcon:{
+  ticketIcon: {
     fontSize: FONT_SIZE.size_24,
     color: COLORS.White,
     paddingHorizontal: SPACING.space_4,

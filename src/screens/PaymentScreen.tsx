@@ -1,26 +1,25 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import {
-  Text,
-  View,
-  StyleSheet,
+  ImageBackground,
   SafeAreaView,
   ScrollView,
   StatusBar,
-  ImageBackground,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Alert,
+  View
 } from "react-native";
-import { BORDER_RADIUS, COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
-import { LinearGradient } from "expo-linear-gradient";
-import MovieDetailsHeader from "../components/MovieDetailsHeader";
-import { useState } from "react";
 import Toast from "react-native-toast-message";
 import momo from "../assets/image/momo.jpg";
+import MovieDetailsHeader from "../components/MovieDetailsHeader";
+import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
 
 // Import components
+import CardPaymentForm from "../components/CardPaymentForm";
+import MoMoQRPayment from "../components/MoMoQRPayment";
 import PaymentMethodItem from "../components/PaymentMethodItem";
 import SaveInfoCheckbox from "../components/SaveInfoCheckbox";
-import MoMoQRPayment from "../components/MoMoQRPayment";
-import CardPaymentForm from "../components/CardPaymentForm";
 
 const PaymentScreen = ({ navigation, route }: any) => {
   const { PosterImage, seatArray, time, date, price ,nameMovie} = route.params;
@@ -160,6 +159,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   time={time}
                   date={date}
                   PosterImage={PosterImage}
+                  nameMovie={nameMovie}
                 />
               )}
               {selectedPayment === "card" && (
@@ -172,6 +172,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   time={time}
                   date={date}
                   PosterImage={PosterImage}
+                  nameMovie={nameMovie}
                 />
               )}
             </>
@@ -252,12 +253,12 @@ const styles = StyleSheet.create({
     color: COLORS.WhiteRGBA50,
   },
   movieNameText:{
-    fontSize: FONT_SIZE.size_40,
+    fontSize: FONT_SIZE.size_30,
     fontFamily: FONT_FAMILY.poppins_regular,
     color: COLORS.White,
     textAlign: "center",
   },
   movieNameContainer: {
-    marginTop: SPACING.space_24,
+    
   },
 });

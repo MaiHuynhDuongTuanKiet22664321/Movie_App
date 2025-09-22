@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
 import Toast from "react-native-toast-message";
+import QRCode from "react-native-qrcode-svg";
+
 
 const MoMoQRPayment = ({
   amount,
@@ -12,6 +14,7 @@ const MoMoQRPayment = ({
   time,
   date,
   PosterImage,
+  nameMovie
 }: any) => {
   const [qrCodeGenerated, setQrCodeGenerated] = useState(false);
 
@@ -38,8 +41,7 @@ const MoMoQRPayment = ({
         <View style={styles.qrCodeBox}>
           {qrCodeGenerated ? (
             <View style={styles.qrCode}>
-              <Text style={styles.qrText}>QR</Text>
-              <Text style={styles.qrSubText}>MoMo</Text>
+              <QRCode value="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=HelloWorld" size={200} />
             </View>
           ) : (
             <Text style={styles.generatingText}>Đang tạo mã QR...</Text>
@@ -87,6 +89,7 @@ const MoMoQRPayment = ({
               date: date,
               PosterImage: PosterImage,
               price: amount,
+              nameMovie:nameMovie
             },
           });
         }}

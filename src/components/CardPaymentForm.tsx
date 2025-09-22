@@ -5,13 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from "react-native";
 import { COLORS, SPACING } from "../theme/theme";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Toast from "react-native-toast-message";
 
-const CardPaymentForm = ({ amount, onBack, navigation, route , seatArray, time, date, PosterImage }: any) => {
+const CardPaymentForm = ({ amount, onBack, navigation, route , seatArray, time, date, PosterImage, nameMovie }: any) => {
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
@@ -142,7 +141,8 @@ const CardPaymentForm = ({ amount, onBack, navigation, route , seatArray, time, 
             time: time,
             date: date,
             PosterImage: PosterImage,
-            price: amount
+            price: amount,
+            nameMovie: nameMovie
             }
           })
           handlePayment();

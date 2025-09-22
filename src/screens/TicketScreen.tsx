@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default */
 import React, { useEffect, useState } from "react";
 import {
   Text,
@@ -25,7 +26,7 @@ import { LinearGradient } from "expo-linear-gradient";
 const TicketScreen = ({ navigation, route }: any) => {
   const [ticketData, setTicketData] = useState<any>(null);
 
-  // 🔹 Khi mở màn hình: lấy ticket trong storage
+  // Khi mở màn hình: lấy ticket trong storage
   useEffect(() => {
     (async () => {
       try {
@@ -39,7 +40,7 @@ const TicketScreen = ({ navigation, route }: any) => {
     })();
   }, []);
 
-  // 🔹 Khi có route.params mới: set state và lưu xuống storage
+  // Khi có route.params mới: set state và lưu xuống storage
   useEffect(() => {
     if (route.params) {
       setTicketData(route.params);
@@ -167,11 +168,7 @@ const TicketScreen = ({ navigation, route }: any) => {
                 </Text>
               </View>
             </View>
-
-            <Image
-              source={require("../assets/image/barcode.png")}
-              style={styles.barcodeImage}
-            />
+            <Image source={require("../assets/image/barcode.png")} style={styles.barcodeImage}/>
           </View>
         </View>
       </ScrollView>
@@ -207,11 +204,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   linearGradient: {
-    height: "70%",
+    height: "100%",
   },
   linear: {
     borderTopColor: COLORS.Black,
-    borderTopWidth: 3,
+    borderTopWidth: 2,
     width: 300,
     alignSelf: "center",
     backgroundColor: COLORS.Orange,

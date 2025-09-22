@@ -55,6 +55,11 @@ const SearchScreen = ({ navigation, route }: any) => {
               }}
               defaultValue={initialQuery}
             />
+            {searchList.length > 0 && (
+              <Text style={styles.resultText}>
+                Results ({searchList.length})
+              </Text>
+            )}
           </View>
         }
         ListEmptyComponent={
@@ -105,4 +110,11 @@ const styles = StyleSheet.create({
   centerContainer: {
     alignContent: "center",
   },
+  resultText: {
+  color: COLORS.White,
+  textAlign: "left",
+  marginVertical: 12,
+  fontSize: 14,
+  opacity: 0.7,
+},
 });
