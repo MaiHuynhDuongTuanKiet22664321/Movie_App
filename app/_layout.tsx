@@ -1,20 +1,30 @@
-import * as React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { UserProvider, useUser } from '@/src/context/UserContext';
 import TabNavigator from '@/src/navigators/TabNavigator';
+import AuthScreen from '@/src/screens/AuthScreen';
+import EditProfileScreen from '@/src/screens/EditProfileScreen';
 import MovieDetailScreen from '@/src/screens/MovieDetailScreen';
-import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
-import SearchScreen from '@/src/screens/SearchScreen';
-import TicketScreen from '@/src/screens/TicketScreen';
 import PaymentScreen from '@/src/screens/PaymentScreen';
+import SeatBookingScreen from '@/src/screens/SeatBookingScreen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as React from 'react';
 
 import Toast from 'react-native-toast-message';
 
 const Stack = createNativeStackNavigator();
 
-const Tablayout = () => {
+const AppNavigator = () => {
+  const { user, loading } = useUser();
+
+  // Show loading while checking auth state
+  if (loading) {
+    return null; // Or return a loading screen
+  }
+
   return (
-    <>
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={{ headerShown: false }} 
+      initialRouteName={user ? 'Tab' : 'Auth'}
+    >
       <Stack.Screen
         name="Tab"
         component={TabNavigator}
@@ -35,9 +45,27 @@ const Tablayout = () => {
         component={PaymentScreen}
         options={{ animation: "slide_from_bottom" }}
       />
+      
+      <Stack.Screen
+        name="Auth"
+        component={AuthScreen}
+        options={{ animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ animation: "slide_from_right" }}
+      />
     </Stack.Navigator>
-    <Toast />
-    </>
+  );
+};
+
+const Tablayout = () => {
+  return (
+    <UserProvider>
+      <AppNavigator />
+      <Toast />
+    </UserProvider>
   );
 };
 

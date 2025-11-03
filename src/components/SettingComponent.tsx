@@ -6,7 +6,12 @@ import Octicons from "@expo/vector-icons/Octicons";
 
 const SettingComponent = (props: any) => {
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.7}>
+    <TouchableOpacity 
+      style={styles.container} 
+      activeOpacity={0.7}
+      onPress={props.onPress}
+      disabled={!props.onPress}
+    >
       {/* Icon bên trái */}
       <View style={styles.iconWrapper}>
         <Ionicons name={props.icon} style={styles.iconStyle} />

@@ -15,7 +15,7 @@
     "@react-navigation/bottom-tabs": "^7.4.6",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.17",
-    "expo": "~53.0.22",
+    "expo": "~54.0.0",
     "expo-barcode-generator": "^4.0.0",
     "expo-blur": "~14.1.5",
     "expo-checkbox": "~4.1.4",

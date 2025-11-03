@@ -1,20 +1,39 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import * as React from "react";
 import {
-  Text,
-  View,
-  StyleSheet,
-  StatusBar,
   Image,
   SafeAreaView,
   ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
+import Toast from "react-native-toast-message";
 import AppHeader from "../components/MovieDetailsHeader";
 import SettingComponent from "../components/SettingComponent";
-import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "../context/UserContext";
+import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
 
 const UserAccountScreen = ({ navigation }: any) => {
+  const { user, logout } = useUser();
+  const nav = useNavigation<any>();
+
+  const handleLogout = () => {
+    logout();
+    Toast.show({
+      type: 'success',
+      text1: 'Đăng xuất thành công',
+      text2: 'Hẹn gặp lại!',
+    });
+    nav.navigate("Auth");
+  };
+
+  const handleEditProfile = () => {
+    nav.navigate('EditProfile');
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar hidden />
@@ -36,33 +55,42 @@ const UserAccountScreen = ({ navigation }: any) => {
             source={require("../assets/image/avatar.png")}
             style={styles.avatarImage}
           />
-          <Text style={styles.avatarText}>John Doe</Text>
+          <Text style={styles.avatarText}>
+            {user?.fullName || "Guest User"}
+          </Text>
+          {user?.email && (
+            <Text style={styles.avatarEmail}>{user.email}</Text>
+          )}
+          {user?.phoneNumber && (
+            <Text style={styles.avatarPhone}>{user.phoneNumber}</Text>
+          )}
         </View>
 
         <View style={styles.settingList}>
           <SettingComponent
             icon="person-outline"
-            heading="Account"
-            subheading="Edit Profile"
-            subtitle="Change Password"
+            heading="Tài khoản"
+            subheading={`${user?.fullName || "Chưa có tên"}`}
+            subtitle={user?.email || "Chưa có email"}
+            onPress={handleEditProfile}
           />
           <SettingComponent
             icon="settings-outline"
-            heading="Settings"
-            subheading="Theme"
-            subtitle="Permissions"
+            heading="Cài đặt"
+            subheading="Giao diện"
+            subtitle="Quyền truy cập"
           />
           <SettingComponent
             icon="cash-outline"
-            heading="Offers & Referrals"
-            subheading="Offer"
-            subtitle="Referrals"
+            heading="Ưu đãi & Giới thiệu"
+            subheading="Ưu đãi"
+            subtitle="Giới thiệu bạn bè"
           />
           <SettingComponent
             icon="information-circle-outline"
-            heading="About"
-            subheading="About Movies"
-            subtitle="More"
+            heading="Về ứng dụng"
+            subheading="Về Movie App"
+            subtitle="Thêm"
           />
         </View>
       </ScrollView>
@@ -71,10 +99,10 @@ const UserAccountScreen = ({ navigation }: any) => {
       <TouchableOpacity
         style={styles.logoutButton}
         activeOpacity={0.8}
-        onPress={() => console.log("Logout pressed")}
+        onPress={handleLogout}
       >
         <Ionicons name="log-out-outline" size={20} color={COLORS.White} />
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -108,6 +136,18 @@ const styles = StyleSheet.create({
     marginTop: SPACING.space_12,
     color: COLORS.White,
   },
+  avatarEmail: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    marginTop: SPACING.space_8,
+    color: COLORS.WhiteRGBA75,
+  },
+  avatarPhone: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    marginTop: SPACING.space_4,
+    color: COLORS.WhiteRGBA75,
+  },
   settingList: {
     paddingHorizontal: SPACING.space_20,
   },
@@ -117,9 +157,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginHorizontal: SPACING.space_20,
     marginBottom: SPACING.space_20,
+    marginTop: SPACING.space_16,
     paddingVertical: SPACING.space_16,
     backgroundColor: COLORS.Orange,
     borderRadius: 12,
+    zIndex: 10,
+    elevation: 5,
   },
   logoutText: {
     fontFamily: FONT_FAMILY.poppins_medium,
