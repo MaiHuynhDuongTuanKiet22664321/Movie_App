@@ -169,3 +169,9 @@ mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites
 - Không commit file `.env` lên git
 - Sử dụng HTTPS trong production
 
+- Nội dung file .env
+<!-- PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://nguyenannguyen:nguyen123@cluster1.he07b1n.mongodb.net/movie?appName=Cluster1
+JWT_SECRET=your_super_secret_jwt_key_here
+JWT_EXPIRE=1m -->
