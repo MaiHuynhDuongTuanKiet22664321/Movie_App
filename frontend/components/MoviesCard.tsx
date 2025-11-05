@@ -8,6 +8,7 @@ import {
   SPACING,
 } from "../theme/theme";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { useUser } from "../context/UserContext";
 
 const genreList: Record<number, string> = {
   28: "Action",
@@ -40,6 +41,7 @@ interface MoviesCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   onPress?: () => void;
+  onAddPress?: () => void;
   genre?: number[];
   vote_average?: number;
   vote_count?: number;
@@ -53,13 +55,15 @@ const MoviesCard = ({
   shouldMarginateAround,
   isFirst,
   isLast,
-  onPress: cardFuntion,
+  onPress: cardFunction,
+  onAddPress,
   genre,
   vote_average,
   vote_count,
 }: MoviesCardProps) => {
+  const { user } = useUser();
   return (
-    <TouchableOpacity onPress={cardFuntion}>
+    <TouchableOpacity onPress={cardFunction}>
       <View
         style={[
           styles.container,
@@ -74,31 +78,41 @@ const MoviesCard = ({
           { maxWidth: cardWidth },
         ]}
       >
-        <Image
-          style={[styles.cardImage, { width: cardWidth }]}
-          source={{
-            uri:
-              imagePath ||
-              "https://via.placeholder.com/300x450.png?text=No+Image",
-          }}
-        />
+        <View>
+          <Image
+            style={[styles.cardImage, { width: cardWidth }]}
+            resizeMode="cover"
+            source={{
+              uri:
+                imagePath ||
+                "https://via.placeholder.com/300x450.png?text=No+Image",
+            }}
+          />
+
+          {user?.role.trim() === "admin" && (
+            <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
+              <Ionicons name="add" size={20} color={COLORS.White} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <View style={styles.rateContainer}>
           <FontAwesome6 name="star" style={styles.starIcon} />
           <Text style={styles.voteText}>
             {vote_average} ({vote_count})
           </Text>
         </View>
+
         <Text numberOfLines={3} style={styles.textTitle}>
           {title}
         </Text>
+
         <View style={styles.genreContainer}>
-          {genre?.map((item: any) => {
-            return (
-              <View key={item} style={styles.genreBox}>
-                <Text style={styles.genreText}>{genreList[item]}</Text>
-              </View>
-            );
-          })}
+          {genre?.map((item: any) => (
+            <View key={item} style={styles.genreBox}>
+              <Text style={styles.genreText}>{genreList[item]}</Text>
+            </View>
+          ))}
         </View>
       </View>
     </TouchableOpacity>
@@ -112,7 +126,18 @@ const styles = StyleSheet.create({
   cardImage: {
     aspectRatio: 2 / 3,
     borderRadius: BORDER_RADIUS.radius_20,
-    resizeMode: "cover",
+  },
+  addButton: {
+    position: "absolute",
+    top: SPACING.space_10,
+    right: SPACING.space_10,
+    backgroundColor: COLORS.Orange,
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
   },
   textTitle: {
     fontFamily: FONT_FAMILY.poppins_regular,
@@ -143,18 +168,18 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
   },
-  genreBox:{
+  genreBox: {
     borderColor: COLORS.WhiteRGBA25,
     borderWidth: 1,
     paddingVertical: SPACING.space_4,
     paddingHorizontal: SPACING.space_10,
     borderRadius: BORDER_RADIUS.radius_20,
   },
-genreText: {
-      fontFamily: FONT_FAMILY.poppins_regular,
-      fontSize: FONT_SIZE.size_10,
-      color: COLORS.White,
-    },
+  genreText: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_10,
+    color: COLORS.White,
+  },
 });
 
 export default MoviesCard;

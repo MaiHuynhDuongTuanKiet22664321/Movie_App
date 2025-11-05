@@ -106,6 +106,9 @@ const HomeScreen = ({ navigation }: any) => {
                   genre={movie.genre_ids.slice(1, 4)}
                   vote_average={movie.vote_average}
                   vote_count={movie.vote_count}
+                  onAddPress={() => 
+                    navigation.navigate("MovieScheduleScreen_AD", { id: movie.id })
+                  }
                 />
               )}
             />
@@ -127,6 +130,9 @@ const HomeScreen = ({ navigation }: any) => {
                   imagePath={baseImagePath("w342", movie.poster_path)}
                   shouldMarginateAtEnd={false}
                   shouldMarginateAround={true}
+                  onAddPress={() => 
+                    navigation.navigate("MovieScheduleScreen_AD", { id: movie.id })
+                  }
                 />
               )}
             />

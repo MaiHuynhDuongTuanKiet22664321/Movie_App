@@ -7,6 +7,8 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "../context/UserContext";
 
 interface SubMoviesCardProps {
   title: string;
@@ -17,6 +19,7 @@ interface SubMoviesCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   onPress?: () => void;
+  onAddPress?: () => void;
 }
 
 const SubMoviesCard = ({
@@ -27,10 +30,12 @@ const SubMoviesCard = ({
   shouldMarginateAround,
   isFirst,
   isLast,
-  onPress: cardFuntion,
+  onPress: cardFunction,
+  onAddPress,
 }: SubMoviesCardProps) => {
+  const { user } = useUser();
   return (
-    <TouchableOpacity onPress={cardFuntion}>
+    <TouchableOpacity onPress={cardFunction}>
       <View
         style={[
           styles.container,
@@ -45,14 +50,24 @@ const SubMoviesCard = ({
           { maxWidth: cardWidth },
         ]}
       >
-        <Image
-          style={[styles.cardImage, { width: cardWidth }]}
-          source={{
-            uri:
-              imagePath ||
-              "https://via.placeholder.com/300x450.png?text=No+Image",
-          }}
-        />
+        <View>
+          <Image
+            style={[styles.cardImage, { width: cardWidth }]}
+            resizeMode="contain"
+            source={{
+              uri:
+                imagePath ||
+                "https://via.placeholder.com/300x450.png?text=No+Image",
+            }}
+          />
+
+          {user?.role.trim() === "admin" && (
+            <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
+              <Ionicons name="add" size={18} color={COLORS.White} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <Text numberOfLines={3} style={styles.textTitle}>
           {title}
         </Text>
@@ -66,9 +81,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
   },
   cardImage: {
-    aspectRatio: 2/3,
+    aspectRatio: 2 / 3,
     borderRadius: BORDER_RADIUS.radius_20,
-    resizeMode: "cover",
+  },
+  addButton: {
+    position: "absolute",
+    top: SPACING.space_10,
+    right: SPACING.space_10,
+    backgroundColor: COLORS.Orange,
+    borderRadius: 20,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
   },
   textTitle: {
     fontFamily: FONT_FAMILY.poppins_regular,

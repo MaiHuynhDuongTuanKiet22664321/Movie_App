@@ -1,4 +1,3 @@
-import { Colors } from './../../constants/Colors';
 interface Spacing{
     space_2:number;
     space_4:number;
