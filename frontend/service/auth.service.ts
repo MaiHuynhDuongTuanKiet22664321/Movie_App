@@ -1,11 +1,5 @@
-// API base URL - Thay đổi thành IP máy tính của bạn khi test trên thiết bị thật
-// Ví dụ: 'http://192.168.1.100:5000' hoặc 'http://localhost:5000' cho emulator
-const BASE_URL = __DEV__ 
-  ? 'http://localhost:5000'  // Development - Emulator
-  : 'http://localhost:5000'; // Production - Thay bằng IP thật của server
 
-
-export const API_BASE_URL = BASE_URL;
+export const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 // API endpoints
 const AUTH_ENDPOINTS = {
@@ -13,6 +7,7 @@ const AUTH_ENDPOINTS = {
   LOGIN: `${BASE_URL}/api/auth/login`,
   UPDATE_PROFILE: `${BASE_URL}/api/auth/profile`,
 };
+
 
 // Register user
 export const registerUser = async (userData: {

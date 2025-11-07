@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import movieRoutes from './routes/movieRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/movies', movieRoutes);
+app.use('/api/schedules', scheduleRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

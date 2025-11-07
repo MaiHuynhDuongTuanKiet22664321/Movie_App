@@ -3,7 +3,7 @@ export const baseImagePath = (size: string, path: string) => {
   return `https://image.tmdb.org/t/p/${size}${path}`;
 };
 
-const language = "vi-VN"; // chỉ cần đổi 1 chỗ
+const language = "vi-VN"; 
 
 export const nowPlayingMovie: string = 
   `https://api.themoviedb.org/3/movie/now_playing?api_key=${apikey}&language=${language}`;

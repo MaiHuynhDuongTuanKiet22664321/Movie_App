@@ -53,8 +53,8 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
   // Fetch data song song
   useEffect(() => {
     const fetchData = async () => {
-      const moviePromise = getMovieDetails(route.params?.id);
-      const castPromise = getMovieCastDetails(route.params?.id);
+      const moviePromise = getMovieDetails(route.params?.id || route.params?.tmdb_id);
+      const castPromise = getMovieCastDetails(route.params?.id || route.params?.tmdb_id);
 
       const [movie, cast] = await Promise.all([moviePromise, castPromise]);
       setMovieData(movie);

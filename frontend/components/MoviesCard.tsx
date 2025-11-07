@@ -89,11 +89,11 @@ const MoviesCard = ({
             }}
           />
 
-          {user?.role.trim() === "admin" && (
+          {/* {user?.role.trim() === "admin" && (
             <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
               <Ionicons name="add" size={20} color={COLORS.White} />
             </TouchableOpacity>
-          )}
+          )} */}
         </View>
 
         <View style={styles.rateContainer}>

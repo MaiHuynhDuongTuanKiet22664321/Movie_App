@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { loginUser, registerUser } from '../api/authApi';
+import { loginUser, registerUser } from '../service/auth.service';
 import { useUser } from '../context/UserContext';
 
 const AuthScreen = () => {

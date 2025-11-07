@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { updateUserProfile } from '../api/authApi';
+import { updateUserProfile } from '../service/auth.service';
 import { useUser } from '../context/UserContext';
 import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '../theme/theme';
 import Toast from 'react-native-toast-message';

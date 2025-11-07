@@ -46,24 +46,66 @@ const getMovieCastDetails = async (id: number) => {
   }
 };
 
+const extractMovieData = (movie: any) => {
+    const genreId = movie?.genres?.map((g: any) => g.id) || [];
+    
+    return {
+        tmdb_id: movie.id, 
+        title: movie.title || movie.original_title,
+        original_title: movie.original_title,
+        overview: movie.overview,
+        runtime: movie.runtime,
+        release_date: movie.release_date,
+        poster_path: movie.poster_path,
+        backdrop_path: movie.backdrop_path,
+        vote_average: movie.vote_average,
+        vote_count: movie.vote_count,
+        genres: genreId, 
+        tagline: movie.tagline,
+    };
+};
+
+
 const MovieDetailScreen = ({ navigation, route }: any) => {
   const [movieData, setMovieData] = useState<any>(undefined);
   const [movieCastData, setMovieCastData] = useState<any>(undefined);
 
-  // Fetch data song song
+  const movieId = route.params?.id;
+
   useEffect(() => {
     const fetchData = async () => {
-      const moviePromise = getMovieDetails(route.params?.id);
-      const castPromise = getMovieCastDetails(route.params?.id);
+        
+      if (!movieId) {
+          console.error("Missing movie ID in route parameters.");
+          return; 
+      }
+      
+      const moviePromise = getMovieDetails(movieId); 
+      const castPromise = getMovieCastDetails(movieId); 
 
       const [movie, cast] = await Promise.all([moviePromise, castPromise]);
       setMovieData(movie);
       setMovieCastData(cast);
     };
     fetchData();
-  }, [route.params?.id]);
+  }, [movieId]);
 
   // Loading spinner
+  if (!movieId) {
+       return (
+         <SafeAreaView style={styles.container}>
+            <MovieDetailsHeader
+              nameIcon="alert-circle-outline"
+              header={"Error"}
+              action={() => navigation.goBack()}
+            />
+            <View style={styles.loadingContainer}>
+              <Text style={styles.runtimeText}>Không tìm thấy ID phim. Vui lòng quay lại.</Text>
+            </View>
+          </SafeAreaView>
+      );
+  }
+    
   if (!movieData || !movieCastData) {
     return (
       <SafeAreaView style={styles.container}>
@@ -78,8 +120,9 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
       </SafeAreaView>
     );
   }
+    
+  const movieDataForSchedule = extractMovieData(movieData);
 
-  // Main content
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -88,7 +131,7 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
         showsVerticalScrollIndicator={false}
       >
         <StatusBar hidden />
-
+        
         <View>
           <ImageBackground
             source={{
@@ -180,20 +223,21 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
         </View>
       </ScrollView>
       <View>
-            <TouchableOpacity
-              style={styles.buttonBG}
-              onPress={() => {
-                navigation.push("MovieScheduleSetupScreen_AD", {
-                  BgImage: baseImagePath("w780", movieData.backdrop_path),
-                  PosterImage: baseImagePath("original", movieData.poster_path),
-                  nameMovie: movieData.original_title,
-                });
-              }}
-            >
-              <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
-              <Text style={styles.buttonText}>Schedule movie</Text>
-            </TouchableOpacity>
-          </View>
+        <TouchableOpacity
+          style={styles.buttonBG}
+          onPress={() => {
+            navigation.push("MovieScheduleSetupScreen_AD", {
+              BgImage: baseImagePath("w780", movieData.backdrop_path),
+              PosterImage: baseImagePath("original", movieData.poster_path),
+              nameMovie: movieData.original_title,
+              movieData: movieDataForSchedule, 
+            });
+          }}
+        >
+          <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
+          <Text style={styles.buttonText}>Schedule movie</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };

@@ -53,6 +53,8 @@ export const SPACING: Spacing = {
 }
 
 interface Color {
+  Red:string,
+  RedRGB:string,
   Black: string;
   BlackRGB5: string;
   BlackRGB10: string;
@@ -77,6 +79,8 @@ interface Color {
 }
 
 export const COLORS: Color = {
+  Red:"#FF0000",
+  RedRGB:'rgba(236, 69, 69, 0.94)',
   Black: "#000000",
   BlackRGB5: 'rgba(253, 248, 248, 0.26)',
   BlackRGB10: 'rgba(0, 0, 0, 0.1)',
