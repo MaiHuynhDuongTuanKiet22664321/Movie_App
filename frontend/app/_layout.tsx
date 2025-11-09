@@ -1,12 +1,12 @@
-import { UserProvider, useUser } from '@/frontend/context/UserContext';
-import TabNavigator from '@/frontend/navigators/TabNavigator';
-import AuthScreen from '@/frontend/screens/AuthScreen';
-import EditProfileScreen from '@/frontend/screens/EditProfileScreen';
-import MovieDetailScreen from '@/frontend/screens/MovieDetailScreen';
-import MovieScheduleScreen_AD from '@/frontend/screens/MovieScheduleScreen_AD';
-import MovieScheduleSetupScreen_AD from '@/frontend/screens/MovieScheduleSetupScreen_AD';
-import PaymentScreen from '@/frontend/screens/PaymentScreen';
-import SeatBookingScreen from '@/frontend/screens/SeatBookingScreen';
+import { UserProvider, useUser } from '../src/context/UserContext';
+import TabNavigator from '../src/navigators/TabNavigator';
+import AuthScreen from '../src/screens/AuthScreen';
+import EditProfileScreen from '../src/screens/EditProfileScreen';
+import MovieDetailScreen from '../src/screens/MovieDetailScreen';
+import MovieScheduleScreen_AD from '../src/screens/MovieScheduleScreen_AD';
+import MovieScheduleSetupScreen_AD from '../src/screens/MovieScheduleSetupScreen_AD';
+import PaymentScreen from '../src/screens/PaymentScreen';
+import SeatBookingScreen from '../src/screens/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 

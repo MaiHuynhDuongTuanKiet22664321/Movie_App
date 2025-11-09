@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
     Text,
     View,
@@ -8,7 +8,6 @@ import {
     StatusBar,
     ScrollView,
     Dimensions,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,7 +18,6 @@ import Svg, { Defs, ClipPath, Image as SvgImage, Path } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { createSchedules, getOccupiedSlots } from "../service/schedule.service";
 import { createMovie, checkMovieExists } from "../service/movie.service";
 
 const { width } = Dimensions.get("window");
@@ -27,7 +25,6 @@ const height = 260;
 const bottomCurveHeight = 50;
 const topCurveHeight = 50;
 
-// Tạo danh sách ngày (7 ngày tới)
 const generateDates = () => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const now = new Date();
@@ -36,7 +33,7 @@ const generateDates = () => {
         return {
             day: days[d.getDay()],
             date: `${d.getDate()}/${d.getMonth() + 1}`,
-            value: d.toISOString().split('T')[0], // YYYY-MM-DD
+            value: d.toISOString().split('T')[0],
         };
     });
 };
@@ -50,36 +47,7 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
     const [selectedTimes, setSelectedTimes] = useState<number[]>([]);
     const [dateArray] = useState<any>(generateDates());
     
-    // --- STATE LOADING DỮ LIỆU ĐÃ CHIẾM ---
-    const [occupiedSlots, setOccupiedSlots] = useState<any[]>([]);
-    const [isLoadingSlots, setIsLoadingSlots] = useState(true);
-    
     const movieData = route.params?.movieData; 
-
-    // --- useEffect: Lấy các slots đã bị chiếm ---
-    useEffect(() => {
-        const fetchOccupiedSlots = async () => {
-            try {
-                // Lấy TẤT CẢ các slot đã bị chiếm (dùng cho việc kiểm tra trùng lặp trên client)
-                const response = await getOccupiedSlots();
-                const mappedSlots = response.data?.occupiedSlots.map((slot: any) => ({
-                    ...slot,
-                    date: new Date(slot.date).toISOString().split('T')[0], 
-                })) || [];
-                
-                setOccupiedSlots(mappedSlots);
-            } catch (error) {
-                console.error("Error fetching occupied slots:", error);
-                Toast.show({
-                    type: "error",
-                    text1: "Không thể tải lịch chiếu đã tồn tại.",
-                });
-            } finally {
-                setIsLoadingSlots(false);
-            }
-        };
-        fetchOccupiedSlots();
-    }, []);
 
     const toggleSelection = (
         setState: React.Dispatch<React.SetStateAction<number[]>>,
@@ -93,17 +61,10 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
         }
     };
 
-    // ✅ HELPER: Kiểm tra slot có bị chiếm không
-    const isSlotOccupied = useCallback((dateValue: string, timeValue: string, roomValue: string) => {
-        return occupiedSlots.some(
-            (slot) => 
-                slot.date === dateValue && 
-                slot.startTime === timeValue && 
-                slot.room === roomValue
-        );
-    }, [occupiedSlots]);
+    const isSlotOccupied = useCallback(() => {
+        return false;
+    }, []);
 
-    // ✅ CẬP NHẬT LOGIC: Tạo danh sách xem trước với cờ isOccupied
     const scheduleListPreview = useMemo(() => {
         if (selectedRooms.length === 0 || selectedDates.length === 0 || selectedTimes.length === 0) {
             return [];
@@ -125,15 +86,14 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                         room: roomValue,
                         scheduleDateValue: dateValue,
                         scheduleTimeValue: timeValue,
-                        isOccupied: isSlotOccupied(dateValue, timeValue, roomValue), 
+                        isOccupied: false,
                     });
                 }
             }
         }
         return list;
-    }, [selectedRooms, selectedDates, selectedTimes, dateArray, isSlotOccupied]);
+    }, [selectedRooms, selectedDates, selectedTimes, dateArray]);
 
-    // ✅ LOGIC: TRẢ VỀ CÁC MẢNG GỐC (KHÔNG LỌC)
     const availableOptions = useMemo(() => {
         return {
             rooms: roomArray, 
@@ -142,7 +102,6 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
         };
     }, [dateArray]); 
 
-    // ✅ CẬP NHẬT HÀM saveSchedule: LỌC BỎ LỊCH TRÙNG TRƯỚC KHI GỬI
     const saveSchedule = async () => {
         if (scheduleListPreview.length === 0) {
             Toast.show({
@@ -163,21 +122,9 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
             return;
         }
         
-        // --- LỌC BỎ CÁC LỊCH ĐÃ BỊ CHIẾM TRƯỚC KHI GỬI ---
-        const validSchedules = scheduleListPreview.filter(item => !item.isOccupied);
-        const conflictedCount = scheduleListPreview.length - validSchedules.length;
+        const schedulesCount = scheduleListPreview.length;
 
-        if (validSchedules.length === 0) {
-             Toast.show({
-                type: "info",
-                text1: "Không có lịch chiếu hợp lệ nào để tạo.",
-                text2: `${conflictedCount} lịch đã chọn đều trùng với lịch đã tồn tại.`,
-            });
-            return;
-        }
-        // ------------------------------------
-
-        const schedulesForServer = validSchedules.map(item => ({
+        const schedulesForServer = scheduleListPreview.map(item => ({
             movieId: movieIdToSend,
             date: item.scheduleDateValue,
             room: item.room,
@@ -185,22 +132,20 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
         }));
         
         try {
-            // ✅ 1. KIỂM TRA MOVIE CÓ TỒN TẠI CHƯA 
             let movieExists = await checkMovieExists(String(movieData.tmdb_id));
             try {
                 if (movieExists.exists) {
-                    console.log("✅ Movie already exists, skip creation.");
+                    // console.log("Movie already exists, skip creation.");
                 }
             } catch (fetchErr: any) {
                 if (fetchErr?.response?.status === 404) {
-                    console.log("ℹ️ Movie not found, will create new.");
+                    // console.log("Movie not found, will create new.");
                     movieExists = false;
                 } else {
-                    console.warn("⚠️ Error checking movie existence:", fetchErr.message);
+                    // console.warn("Error checking movie existence:", fetchErr.message);
                 }
             }
 
-            // ✅ 2. NẾU MOVIE CHƯA TỒN TẠI => TẠO MỚI
             if (!movieExists) {
                 try {
                     const createMovieResponse = await createMovie({
@@ -219,16 +164,16 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     });
                     
                     if (createMovieResponse?._id || createMovieResponse?.status === "success") {
-                        console.log("✅ Movie created successfully");
+                        // console.log("Movie created successfully");
                     }
                 } catch (movieErr: any) {
                     const status = movieErr?.response?.status;
                     const message = movieErr?.response?.data?.message;
 
                     if (status === 409 || (message && message.includes("exists"))) {
-                        console.log("⚠️ Movie creation race condition (409), proceed to schedule creation.");
+                        // console.log("Movie creation race condition (409), proceed to schedule creation.");
                     } else if (status === 400 || status === 500) {
-                        console.error(`❌ Movie creation FAILED (Status: ${status}):`, movieErr.response?.data);
+                        // console.error(`Movie creation FAILED (Status: ${status}):`, movieErr.response?.data);
                         Toast.show({
                             type: "error",
                             text1: `Lỗi Server/Validation khi tạo phim (Status ${status}).`,
@@ -236,7 +181,7 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                         });
                         return;
                     } else {
-                        console.error("❌ Unknown error creating movie:", movieErr);
+                        // console.error("Unknown error creating movie:", movieErr);
                         Toast.show({
                             type: "error",
                             text1: "Không thể tạo phim.",
@@ -246,69 +191,32 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     }
                 }
             }
-
-            // ✅ 3. TẠO LỊCH CHIẾU (Chỉ gửi lịch hợp lệ)
-            const response = await createSchedules(schedulesForServer);
-            const totalCreated = response.results || response.insertedCount || 0;
-            const totalFailedServer = response.errorDetails?.length || 0;
-
-            if (totalCreated > 0) {
-                let successText = `${totalCreated} lịch chiếu đã được tạo thành công!`;
-                if (conflictedCount > 0) {
-                    successText += ` (Đã bỏ qua ${conflictedCount} lịch trùng đã tồn tại).`;
-                } else if (totalFailedServer > 0) {
-                    successText += ` (${totalFailedServer} lịch bị lỗi/trùng do server).`;
-                }
-
-                Toast.show({
-                    type: "success",
-                    text1: successText,
-                });
-            } else if (conflictedCount > 0) {
-                // Trường hợp tất cả đều bị lọc trước khi gửi
-                 Toast.show({
-                    type: "info",
-                    text1: "Không có lịch chiếu hợp lệ nào được tạo.",
-                    text2: `${conflictedCount} lịch đã chọn đều trùng với lịch đã tồn tại.`,
-                });
-            } else if (totalFailedServer > 0) {
-                // Trường hợp không bị lọc, nhưng server báo lỗi/trùng
-                Toast.show({
-                    type: "info",
-                    text1: "Không có lịch chiếu nào được tạo.",
-                    text2: `${totalFailedServer} lịch bị bỏ qua do trùng/lỗi trên server.`,
-                });
-            } else {
-                Toast.show({
-                    type: "info",
-                    text1: "Không có lịch chiếu nào được tạo.",
-                });
-            }
+            
+            Toast.show({
+                type: "success",
+                text1: `Thành công! Đã "tạo" ${schedulesCount} lịch chiếu.`,
+                text2: "Lưu ý: Chức năng lưu lịch chiếu thực tế đã bị vô hiệu hóa.",
+            });
 
             navigation.goBack();
         } catch (error: any) {
-            console.error("Error saving schedule:", error);
+            // console.error("Error in saveSchedule process:", error);
             Toast.show({
                 type: "error",
-                text1: "Lỗi tạo lịch chiếu.",
-                text2: error?.response?.data?.message || "Vui lòng kiểm tra kết nối và dữ liệu.",
+                text1: "Lỗi trong quá trình (Movie Create).",
+                text2: error?.message || "Vui lòng kiểm tra kết nối và dữ liệu.",
             });
         }
     };
 
-    // --- COMPONENT CON CHO CARD XEM TRƯỚC (Logic màu cho lịch trùng) ---
     const PreviewCard = ({ schedule }: any) => {
-        // Xác định màu dựa trên cờ isOccupied
-        const cardStyle = schedule.isOccupied 
-            ? styles.previewCardOccupied // Màu đỏ nhạt cho lịch trùng
-            : styles.previewCard;         // Màu mặc định cho lịch còn trống
-            
-        const borderColor = schedule.isOccupied ? COLORS.Red : COLORS.WhiteRGBA10;
+        const cardStyle = styles.previewCard; 
+        const borderColor = COLORS.WhiteRGBA10;
 
         return (
             <View style={[cardStyle, { borderColor }]}>
                 <View style={styles.previewSection}>
-                    <FontAwesome6 name="calendar-day" size={16} color={schedule.isOccupied ? COLORS.Red : COLORS.Orange} />
+                    <FontAwesome6 name="calendar-day" size={16} color={COLORS.Orange} />
                     <View>
                         <Text style={styles.cardDetailText}>{schedule.day}</Text>
                         <Text style={styles.cardTitleText}>{schedule.date}</Text>
@@ -316,7 +224,7 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                 </View>
 
                 <View style={styles.previewSection}>
-                    <FontAwesome6 name="clock" size={16} color={schedule.isOccupied ? COLORS.Red : COLORS.Orange} />
+                    <FontAwesome6 name="clock" size={16} color={COLORS.Orange} />
                     <View>
                         <Text style={styles.cardDetailText}>Start Time</Text>
                         <Text style={styles.cardTitleText}>{schedule.time}</Text>
@@ -324,38 +232,21 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                 </View>
 
                 <View style={styles.previewSection}>
-                    <MaterialCommunityIcons name="projector-screen" size={18} color={schedule.isOccupied ? COLORS.Red : COLORS.Orange} />
+                    <MaterialCommunityIcons name="projector-screen" size={18} color={COLORS.Orange} />
                     <View>
                         <Text style={styles.cardDetailText}>Room</Text>
                         <Text style={styles.cardTitleText}>{schedule.room}</Text>
                     </View>
                 </View>
-                {schedule.isOccupied && (
-                    <Text style={styles.occupiedText}>TRÙNG LỊCH ĐÃ TỒN TẠI</Text>
-                )}
             </View>
         );
     };
 
-    // --- HIỂN THỊ LOADING KHI ĐANG TẢI SLOTS ---
-    if (isLoadingSlots) {
-        return (
-            <SafeAreaView style={styles.safeAreaView}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.Orange} />
-                    <Text style={styles.loadingText}>Đang tải lịch chiếu đã tồn tại...</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    // --- RENDER UI ---
     return (
         <SafeAreaView style={styles.safeAreaView}>
             <ScrollView style={styles.container} bounces={false}>
                 <StatusBar hidden />
                 
-                {/* Header + Poster */}
                 <View style={{ width, height }}>
                     <Svg width={width} height={height}>
                         <Defs>
@@ -397,10 +288,8 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     </LinearGradient>
                 </View>
 
-                {/* Movie Title */}
                 <Text style={styles.movieName}>{movieData?.title || route.params?.nameMovie}</Text>
                 
-                {/* --- SECTION: SELECT ROOM --- */}
                 <Text style={styles.sectionTitle}>Select Room (Total: {availableOptions.rooms.length})</Text>
                 <FlatList
                     data={availableOptions.rooms}
@@ -431,7 +320,6 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     }}
                 />
 
-                {/* --- SECTION: SELECT DATE --- */}
                 <Text style={styles.sectionTitle}>Select Date (Total: {availableOptions.dates.length})</Text>
                 <FlatList
                     data={availableOptions.dates}
@@ -463,7 +351,6 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     }}
                 />
 
-                {/* --- SECTION: SELECT TIME --- */}
                 <Text style={styles.sectionTitle}>Select Time (Total: {availableOptions.times.length})</Text>
                 <FlatList
                     data={availableOptions.times}
@@ -494,7 +381,6 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     }}
                 />
                 
-                {/* --- SECTION: VISUAL PREVIEW --- */}
                 <View style={styles.previewWrapper}>
                     <Text style={styles.sectionTitle}>
                         Preview ({scheduleListPreview.length} Schedules)
@@ -517,9 +403,8 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
                     )}
                 </View>
 
-                {/* Save Button */}
                 <TouchableOpacity style={styles.saveButton} onPress={saveSchedule}>
-                    <Text style={styles.saveButtonText}>Save Schedule</Text>
+                    <Text style={styles.saveButtonText}>Save Schedule (Dummy)</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -536,16 +421,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.Black,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        color: COLORS.White,
-        marginTop: SPACING.space_10,
-        fontFamily: FONT_FAMILY.poppins_regular,
     },
     appHeaderContainer: {
         marginHorizontal: SPACING.space_36,
@@ -631,17 +506,7 @@ const styles = StyleSheet.create({
         borderRadius: BORDER_RADIUS.radius_12,
         padding: SPACING.space_16,
         borderWidth: 1,
-        borderColor: COLORS.WhiteRGBA10, // Mặc định
-        gap: SPACING.space_12,
-    },
-    previewCardOccupied: {
-        width: width * 0.7,
-        // Sử dụng giá trị RedRGBA50 hoặc fallback an toàn
-        backgroundColor: 'rgba(255, 0, 0, 0.2)', 
-        borderRadius: BORDER_RADIUS.radius_12,
-        padding: SPACING.space_16,
-        borderWidth: 1,
-        borderColor: COLORS.Red, // Viền đỏ đậm
+        borderColor: COLORS.WhiteRGBA10,
         gap: SPACING.space_12,
     },
     previewSection: {
@@ -661,13 +526,6 @@ const styles = StyleSheet.create({
         fontFamily: FONT_FAMILY.poppins_light,
         fontSize: FONT_SIZE.size_10,
         color: COLORS.WhiteRGBA75,
-    },
-    occupiedText: {
-        fontFamily: FONT_FAMILY.poppins_bold,
-        fontSize: FONT_SIZE.size_12,
-        color: COLORS.Red,
-        textAlign: 'center',
-        marginTop: SPACING.space_8,
     },
     emptyPreview: {
         marginHorizontal: SPACING.space_20,

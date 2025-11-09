@@ -41,7 +41,7 @@ const SearchScreen = ({ navigation, route }: any) => {
       <StatusBar hidden />
       <FlatList
         data={searchList}
-        keyExtractor={(movie: any) => movie.id.toString()}
+        keyExtractor={(movie: any, index: number) => `${(movie?.id ?? index)}-${index}`}
         bounces={false}
         numColumns={2}
         showsVerticalScrollIndicator={false}

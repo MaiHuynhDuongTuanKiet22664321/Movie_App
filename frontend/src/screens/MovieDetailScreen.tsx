@@ -161,7 +161,9 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
           <CategoryHeader title="Top Cast" />
           <FlatList
             data={movieCastData}
-            keyExtractor={(item: any) => item.id}
+            keyExtractor={(item: any, index: number) =>
+              `${item?.id ?? item?.tmdb_id ?? item?.title ?? index}-${index}`
+            }
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.containerGap24}

@@ -146,7 +146,9 @@ const HomeScreen = ({ navigation }: any) => {
           {item.data && item.data.length > 0 ? (
             <FlatList
               data={item.data}
-              keyExtractor={(movie: any) => (movie.id || movie.tmdb_id).toString()} 
+              keyExtractor={(movie: any, index: number) =>
+                `${(movie?.id ?? movie?.tmdb_id ?? movie?.title ?? 'movie')}-${index}`
+              }
               horizontal
               bounces={false}
               showsVerticalScrollIndicator={false}
