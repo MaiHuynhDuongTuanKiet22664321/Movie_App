@@ -20,7 +20,6 @@ const movieSchema = new mongoose.Schema(
     },
     overview: {
       type: String,
-      required: [true, 'Tóm tắt phim không được để trống'],
     },
     runtime: {
       type: Number,

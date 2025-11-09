@@ -41,7 +41,9 @@ const SearchScreen = ({ navigation, route }: any) => {
       <StatusBar hidden />
       <FlatList
         data={searchList}
-        keyExtractor={(movie: any, index: number) => `${(movie?.id ?? index)}-${index}`}
+        keyExtractor={(movie: any, index: number) =>
+          `${movie?.id ?? index}-${index}`
+        }
         bounces={false}
         numColumns={2}
         showsVerticalScrollIndicator={false}
@@ -80,6 +82,11 @@ const SearchScreen = ({ navigation, route }: any) => {
             title={movie.original_title}
             imagePath={baseImagePath("w342", movie.poster_path)}
             shouldMarginateAtEnd={false}
+            onAddPress={() =>
+              navigation.navigate("MovieScheduleScreen_AD", {
+                id: movie.id,
+              })
+            }
           />
         )}
       />
@@ -111,10 +118,10 @@ const styles = StyleSheet.create({
     alignContent: "center",
   },
   resultText: {
-  color: COLORS.White,
-  textAlign: "left",
-  marginVertical: 12,
-  fontSize: 14,
-  opacity: 0.7,
-},
+    color: COLORS.White,
+    textAlign: "left",
+    marginVertical: 12,
+    fontSize: 14,
+    opacity: 0.7,
+  },
 });

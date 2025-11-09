@@ -61,10 +61,6 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
         }
     };
 
-    const isSlotOccupied = useCallback(() => {
-        return false;
-    }, []);
-
     const scheduleListPreview = useMemo(() => {
         if (selectedRooms.length === 0 || selectedDates.length === 0 || selectedTimes.length === 0) {
             return [];
@@ -123,26 +119,19 @@ const ScheduleSetupScreen = ({ navigation, route }: any) => {
         }
         
         const schedulesCount = scheduleListPreview.length;
-
-        const schedulesForServer = scheduleListPreview.map(item => ({
-            movieId: movieIdToSend,
-            date: item.scheduleDateValue,
-            room: item.room,
-            startTime: item.scheduleTimeValue,
-        }));
         
         try {
             let movieExists = await checkMovieExists(String(movieData.tmdb_id));
             try {
                 if (movieExists.exists) {
-                    // console.log("Movie already exists, skip creation.");
+                    console.log("Movie already exists, skip creation.");
                 }
             } catch (fetchErr: any) {
                 if (fetchErr?.response?.status === 404) {
-                    // console.log("Movie not found, will create new.");
+                    console.log("Movie not found, will create new.");
                     movieExists = false;
                 } else {
-                    // console.warn("Error checking movie existence:", fetchErr.message);
+                    console.warn("Error checking movie existence:", fetchErr.message);
                 }
             }
 
