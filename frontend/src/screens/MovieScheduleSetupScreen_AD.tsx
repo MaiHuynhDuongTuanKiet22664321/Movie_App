@@ -26,6 +26,7 @@ const bottomCurveHeight = 50;
 const topCurveHeight = 50;
 
 const generateDates = () => {
+    // Will be replaced with backend data
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const now = new Date();
     return Array.from({ length: 7 }, (_, i) => {
@@ -38,8 +39,9 @@ const generateDates = () => {
     });
 };
 
-const roomArray = ["Room A", "Room B", "Room C", "Room D"];
-const timeArray = ["10:00", "12:30", "15:00", "17:30", "19:00", "21:30"];
+// Mock data - will be fetched from backend
+const roomArray: string[] = [];
+const timeArray: string[] = [];
 
 const ScheduleSetupScreen = ({ navigation, route }: any) => {
     const [selectedRooms, setSelectedRooms] = useState<number[]>([]);

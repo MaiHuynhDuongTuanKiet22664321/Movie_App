@@ -37,13 +37,6 @@ const UserAccountScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar hidden />
-      <View style={styles.appHeaderContainer}>
-        <AppHeader
-          nameIcon="close-circle-outline"
-          header=""
-          action={() => navigation.goBack()}
-        />
-      </View>
 
       {/* Scrollable content */}
       <ScrollView
@@ -113,17 +106,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.Black,
   },
-  appHeaderContainer: {
-    marginHorizontal: SPACING.space_36,
-    marginTop: SPACING.space_20 * 2,
-  },
   scrollContent: {
     paddingBottom: SPACING.space_36,
+    paddingTop: SPACING.space_24,
   },
   profileContainer: {
     alignItems: "center",
-    marginTop: SPACING.space_36,
-    marginBottom: SPACING.space_36,
+    marginBottom: SPACING.space_28,
   },
   avatarImage: {
     height: 90,

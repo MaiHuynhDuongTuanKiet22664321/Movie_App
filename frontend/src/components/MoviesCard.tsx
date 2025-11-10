@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
 import {
   BORDER_RADIUS,
   COLORS,
@@ -9,6 +9,7 @@ import {
 } from "../theme/theme";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 const genreList: Record<number, string> = {
   28: "Action",
@@ -63,7 +64,7 @@ const MoviesCard = ({
 }: MoviesCardProps) => {
   const { user } = useUser();
   return (
-    <TouchableOpacity onPress={cardFunction}>
+    <TouchableOpacity onPress={cardFunction} activeOpacity={0.8}>
       <View
         style={[
           styles.container,
@@ -78,7 +79,7 @@ const MoviesCard = ({
           { maxWidth: cardWidth },
         ]}
       >
-        <View>
+        <View style={styles.imageContainer}>
           <Image
             style={[styles.cardImage, { width: cardWidth }]}
             resizeMode="cover"
@@ -88,12 +89,10 @@ const MoviesCard = ({
                 "https://via.placeholder.com/300x450.png?text=No+Image",
             }}
           />
-
-          {/* {user?.role.trim() === "admin" && (
-            <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
-              <Ionicons name="add" size={20} color={COLORS.White} />
-            </TouchableOpacity>
-          )} */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={styles.gradientOverlay}
+          />
         </View>
 
         <View style={styles.rateContainer}>
@@ -123,9 +122,31 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.Black,
   },
+  imageContainer: {
+    position: 'relative',
+    borderRadius: BORDER_RADIUS.radius_20,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.Orange,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
   cardImage: {
     aspectRatio: 2 / 3,
-    borderRadius: BORDER_RADIUS.radius_20,
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
   },
   addButton: {
     position: "absolute",
@@ -140,11 +161,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   textTitle: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_24,
+    fontFamily: FONT_FAMILY.poppins_bold,
+    fontSize: FONT_SIZE.size_20,
     color: COLORS.White,
     textAlign: "center",
     paddingVertical: SPACING.space_10,
+    letterSpacing: 0.5,
   },
   rateContainer: {
     flexDirection: "row",

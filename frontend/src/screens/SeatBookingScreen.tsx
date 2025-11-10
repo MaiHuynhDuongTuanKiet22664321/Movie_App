@@ -25,61 +25,23 @@ import Toast from "react-native-toast-message";
 import Svg, { Defs, ClipPath, Image as SvgImage } from "react-native-svg";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-const timeArray = [
-  "10:30",
-  "12:30",
-  "14:30",
-  "15:00",
-  "19:30",
-  "20:30",
-  "21:00",
-  "22:30",
-];
-
-const { width } = Dimensions.get("window");
-const height = 260; // chiều cao banner
-const bottomCurveHeight = 50; // độ cong
-const topCurveHeight = 50;
+// Mock data removed - will be fetched from backend
+const timeArray: string[] = [];
 
 const generateDates = () => {
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const now = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-    return {
-      day: days[d.getDay()],
-      date: `${d.getDate()}/${d.getMonth() + 1}`,
-    };
-  });
+  // Will be replaced with backend data
+  return [];
 };
 
 const generateSeats = () => {
-  const rowCount = 8;
-  const maxCols = 10;
-  const seats = [];
-  let peakRow = Math.ceil(rowCount / 2);
-  let seatNumber = 1;
-
-  for (let i = 0; i < rowCount; i++) {
-    let cols;
-    if (i < peakRow) {
-      cols = 4 + 2 * i;
-      if (cols > maxCols) cols = maxCols;
-    } else {
-      cols = 4 + 2 * (rowCount - i - 1);
-      if (cols > maxCols) cols = maxCols;
-    }
-
-    const row = Array.from({ length: cols }, (_, j) => ({
-      number: seatNumber++,
-      taken: Math.random() < 0.5,
-      selected: false,
-    }));
-    seats.push(row);
-  }
-
-  return seats;
+  // Mock data removed - will be fetched from backend based on room and schedule
+  return [];
 };
+
+const { width } = Dimensions.get("window");
+const height = 260;
+const bottomCurveHeight = 50;
+const topCurveHeight = 50;
 
 const SeatBookingScreen = ({ navigation, route }: any) => {
   const [dateArray, setdateArray] = useState<any>(generateDates());
@@ -89,7 +51,8 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const [selectedSeatArray, setSelectedSeatArray] = useState<any>([]);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
   const checkSelectedDateTime = useMemo(() => {
-    setTwoDSeatArray(generateSeats());
+    // Seat data should be fetched from backend when date and time are selected
+    // setTwoDSeatArray should be populated from API response
     return selectedDateIndex !== undefined && selectedTimeIndex !== undefined;
   }, [selectedDateIndex, selectedTimeIndex]);
 

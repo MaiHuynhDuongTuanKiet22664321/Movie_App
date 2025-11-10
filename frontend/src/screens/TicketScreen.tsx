@@ -57,19 +57,24 @@ const TicketScreen = ({ navigation, route }: any) => {
     }
   }, [route.params]);
 
-  // 🔹 Nếu chưa có dữ liệu ticket
+  // 🔹 Nếu chưa có dữ liệu ticket - hiển thị no-ticket
   if (!ticketData) {
     return (
-      <View style={styles.container}>
-        <StatusBar hidden />
-        <View style={styles.appHeaderContainer}>
-          <MovieDetailsHeader
-            nameIcon="close-circle-outline"
-            header=""
-            action={() => navigation.goBack()}
-          />
+      <SafeAreaView style={styles.safeAreaViewContainer}>
+        <View style={styles.container}>
+          <StatusBar hidden />
+          <View style={styles.noTicketContainer}>
+            <Image
+              source={require("../assets/image/no-ticket.png")}
+              style={styles.noTicketImage}
+            />
+            <Text style={styles.noTicketText}>No Tickets Yet</Text>
+            <Text style={styles.noTicketSubText}>
+              Book your favorite movie to see tickets here
+            </Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -77,13 +82,6 @@ const TicketScreen = ({ navigation, route }: any) => {
     <SafeAreaView style={styles.safeAreaViewContainer}>
       <ScrollView style={styles.container}>
         <StatusBar hidden />
-        <View style={styles.appHeaderContainer}>
-          <MovieDetailsHeader
-            nameIcon="close-circle-outline"
-            header={"My Tickets"}
-            action={() => navigation.goBack()}
-          />
-        </View>
 
         <View style={styles.ticketContainer}>
           <ImageBackground
@@ -148,14 +146,6 @@ const TicketScreen = ({ navigation, route }: any) => {
 
             {/* Ghế */}
             <View style={styles.ticketSeatContainer}>
-              <View style={styles.subtitleContainer}>
-                <Text style={styles.subheading}>Hall</Text>
-                <Text style={styles.subtitle}>02</Text>
-              </View>
-              <View style={styles.subtitleContainer}>
-                <Text style={styles.subheading}>Row</Text>
-                <Text style={styles.subtitle}>04</Text>
-              </View>
               <View style={styles.subtitleContainer}>
                 <Text style={styles.subheading}>Seats</Text>
                 <Text style={styles.subtitle}>
@@ -264,6 +254,29 @@ const styles = StyleSheet.create({
     width: 80,
     borderRadius: 80,
     backgroundColor: COLORS.Black,
+  },
+  noTicketContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: SPACING.space_48,
+  },
+  noTicketImage: {
+    width: 250,
+    height: 250,
+    marginBottom: SPACING.space_16,
+  },
+  noTicketText: {
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_24,
+    color: COLORS.White,
+    marginBottom: SPACING.space_8,
+  },
+  noTicketSubText: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.WhiteRGBA50,
+    textAlign: "center",
   },
 });
 

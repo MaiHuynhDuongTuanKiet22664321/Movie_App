@@ -1,22 +1,23 @@
 import express from 'express';
 import {
   getAllSchedules,
-  createBatchSchedules,
-  deleteSchedulesByMovieId,
-  getSchedulesByDateAndTime,
-  getOccupiedSlots,
-  checkSlotAvailability
+  getScheduleById,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  bookSeats,
+  getSchedulesByMovie
 } from '../controllers/scheduleController.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Routes cho lịch chiếu
-router.get('/getall', getAllSchedules);
-router.post('/create', createBatchSchedules);
-router.delete('/movie/:movieId', deleteSchedulesByMovieId); 
-router.get('/bydateandtime', getSchedulesByDateAndTime);
-router.get('/occupiedslots', getOccupiedSlots);
-router.get('/checkslot', checkSlotAvailability);
-
+router.get('/', getAllSchedules);
+router.get('/:id', getScheduleById);
+router.post('/', createSchedule);
+router.put('/:id', updateSchedule);
+router.delete('/:id', deleteSchedule);
+router.post('/:id/book', protect, bookSeats);
+router.get('/movie/:movieId', getSchedulesByMovie);
 
 export default router;

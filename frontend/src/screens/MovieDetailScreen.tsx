@@ -11,7 +11,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { baseImagePath, movieCastDetails, movieDetails } from "../api/apicall";
+import { baseImagePath, movieCastDetails, movieDetails, movieImages } from "../api/apicall";
 import {
   BORDER_RADIUS,
   COLORS,
@@ -26,6 +26,8 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import CategoryHeader from "../components/CategogyHeader";
 import CastCard from "../components/CastCard";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useUser } from "../context/UserContext";
+import { checkMovieExists } from "../service/movie.service";
 
 const getMovieDetails = async (id: number) => {
   try {
@@ -46,19 +48,55 @@ const getMovieCastDetails = async (id: number) => {
   }
 };
 
+const getMovieImages = async (id: number) => {
+  try {
+    let res = await fetch(movieImages(id));
+    let json = await res.json();
+    return json.backdrops; // Trả về danh sách backdrop images
+  } catch (error) {
+    console.error("Something went wrong in MovieImages ", error);
+    return [];
+  }
+};
+
 const MovieDetailScreen = ({ navigation, route }: any) => {
   const [movieData, setMovieData] = useState<any>(undefined);
   const [movieCastData, setMovieCastData] = useState<any>(undefined);
+  const [backdropImage, setBackdropImage] = useState<string>("");
+  const [hasSchedule, setHasSchedule] = useState<boolean>(false);
+  const { user } = useUser();
 
   // Fetch data song song
   useEffect(() => {
     const fetchData = async () => {
-      const moviePromise = getMovieDetails(route.params?.id || route.params?.tmdb_id);
-      const castPromise = getMovieCastDetails(route.params?.id || route.params?.tmdb_id);
+      const movieId = route.params?.id || route.params?.tmdb_id;
+      const moviePromise = getMovieDetails(movieId);
+      const castPromise = getMovieCastDetails(movieId);
+      const imagesPromise = getMovieImages(movieId);
 
-      const [movie, cast] = await Promise.all([moviePromise, castPromise]);
+      const [movie, cast, images] = await Promise.all([moviePromise, castPromise, imagesPromise]);
+      
+      // Chọn ngẫu nhiên 1 backdrop từ danh sách (nếu có)
+      if (images && images.length > 0) {
+        const randomIndex = Math.floor(Math.random() * Math.min(images.length, 5)); // Chọn trong 5 ảnh đầu
+        setBackdropImage(images[randomIndex].file_path);
+      } else if (movie?.backdrop_path) {
+        setBackdropImage(movie.backdrop_path);
+      } else {
+        setBackdropImage(movie?.poster_path || "");
+      }
+      
       setMovieData(movie);
       setMovieCastData(cast);
+      
+      // Kiểm tra xem phim có trong database (có schedule) không
+      try {
+        const exists = await checkMovieExists(String(movie.id));
+        setHasSchedule(exists);
+      } catch (error) {
+        console.error("Error checking movie schedule:", error);
+        setHasSchedule(false);
+      }
     };
     fetchData();
   }, [route.params?.id]);
@@ -92,7 +130,7 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
         <View>
           <ImageBackground
             source={{
-              uri: baseImagePath("w780", movieData?.backdrop_path),
+              uri: baseImagePath("w780", backdropImage),
             }}
             style={styles.imageBG}
           >
@@ -128,17 +166,21 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
           </Text>
         </View>
         <View>
-          <Text style={styles.title}>{movieData?.original_title}</Text>
+          <Text style={styles.title}>{movieData?.original_title || "No title"}</Text>
           <View style={styles.genreContainer}>
-            {movieData?.genres.map((item: any) => {
-              return (
+            {movieData?.genres && movieData.genres.length > 0 ? (
+              movieData.genres.map((item: any) => (
                 <View style={styles.genreBox} key={item.id}>
                   <Text style={styles.genreText}>{item.name}</Text>
                 </View>
-              );
-            })}
+              ))
+            ) : (
+              <Text style={styles.noInfoText}>No genres available</Text>
+            )}
           </View>
-          <Text style={styles.tagline}>{movieData?.tagline}</Text>
+          <Text style={styles.tagline}>
+            {movieData?.tagline || "No tagline available"}
+          </Text>
         </View>
         <View style={styles.infoContainer}>
           <View style={[styles.rateContainer, styles.containerGap24]}>
@@ -154,48 +196,76 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
               {movieData?.release_date.substring(0, 4)}
             </Text>
           </View>
-          <Text style={styles.descriptionText}>{movieData?.overview}</Text>
+          <Text style={styles.descriptionText}>
+            {movieData?.overview || "No description available"}
+          </Text>
         </View>
 
         <View style={styles.castContainer}>
           <CategoryHeader title="Top Cast" />
-          <FlatList
-            data={movieCastData}
-            keyExtractor={(item: any, index: number) =>
-              `${item?.id ?? item?.tmdb_id ?? item?.title ?? index}-${index}`
-            }
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.containerGap24}
-            renderItem={({ item, index }) => (
-              <CastCard
-                shouldMarginatedAtEnd={true}
-                cardWidth={80}
-                isFirst={index === 0}
-                isLast={index === movieCastData?.length - 1}
-                imagePath={baseImagePath("w185", item.profile_path)}
-                title={item.original_name}
-                subtitle={item.character}
-              />
-            )}
-          />
+          {movieCastData && movieCastData.length > 0 ? (
+            <FlatList
+              data={movieCastData}
+              keyExtractor={(item: any, index: number) =>
+                `${item?.id ?? item?.tmdb_id ?? item?.title ?? index}-${index}`
+              }
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.containerGap24}
+              renderItem={({ item, index }) => (
+                <CastCard
+                  shouldMarginatedAtEnd={true}
+                  cardWidth={80}
+                  isFirst={index === 0}
+                  isLast={index === movieCastData?.length - 1}
+                  imagePath={baseImagePath("w185", item.profile_path)}
+                  title={item.original_name}
+                  subtitle={item.character}
+                />
+              )}
+            />
+          ) : (
+            <View style={styles.noCastContainer}>
+              <Text style={styles.noInfoText}>No cast information available</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
-      <View>
-            <TouchableOpacity
-              style={styles.buttonBG}
-              onPress={() => {
-                navigation.push("SeatBooking", {
-                  BgImage: baseImagePath("w780", movieData.backdrop_path),
-                  PosterImage: baseImagePath("original", movieData.poster_path),
-                  nameMovie: movieData.original_title,
-                });
-              }}
-            >
-              <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
-              <Text style={styles.buttonText}>Select Seats</Text>
-            </TouchableOpacity>
-          </View>
+      
+      {/* Button logic: Admin thấy Create Schedule, User thường chỉ thấy Select Seats nếu có schedule */}
+      {user?.role?.trim() === "admin" ? (
+        <View>
+          <TouchableOpacity
+            style={styles.buttonBG}
+            onPress={() => {
+              navigation.push("MovieScheduleScreen_AD", {
+                id: movieData.id,
+                PosterImage: baseImagePath("original", movieData.poster_path),
+                nameMovie: movieData.original_title,
+              });
+            }}
+          >
+            <MaterialCommunityIcons name="calendar-plus" style={styles.ticketIcon}/>
+            <Text style={styles.buttonText}>Create Schedule</Text>
+          </TouchableOpacity>
+        </View>
+      ) : hasSchedule ? (
+        <View>
+          <TouchableOpacity
+            style={styles.buttonBG}
+            onPress={() => {
+              navigation.push("SeatBooking", {
+                BgImage: baseImagePath("w780", backdropImage),
+                PosterImage: baseImagePath("original", movieData.poster_path),
+                nameMovie: movieData.original_title,
+              });
+            }}
+          >
+            <MaterialCommunityIcons name="ticket" style={styles.ticketIcon}/>
+            <Text style={styles.buttonText}>Select Seats</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -287,6 +357,12 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.space_16,
     textAlign: "center",
   },
+  noInfoText: {
+    fontFamily: FONT_FAMILY.poppins_light,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.WhiteRGBA50,
+    fontStyle: "italic",
+  },
   infoContainer: {
     marginHorizontal: SPACING.space_24,
   },
@@ -339,5 +415,10 @@ const styles = StyleSheet.create({
   },
   castContainer:{
     marginBottom: SPACING.space_96
-  }
+  },
+  noCastContainer: {
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_16,
+    alignItems: "center",
+  },
 });
