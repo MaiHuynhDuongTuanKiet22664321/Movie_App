@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
 import {
   BORDER_RADIUS,
   COLORS,
@@ -35,7 +35,7 @@ const SubMoviesCard = ({
 }: SubMoviesCardProps) => {
   const { user } = useUser();
   return (
-    <TouchableOpacity onPress={cardFunction}>
+    <TouchableOpacity onPress={cardFunction} activeOpacity={0.8}>
       <View
         style={[
           styles.container,
@@ -50,7 +50,7 @@ const SubMoviesCard = ({
           { maxWidth: cardWidth },
         ]}
       >
-        <View>
+        <View style={styles.imageContainer}>
           <Image
             style={[styles.cardImage, { width: cardWidth }]}
             resizeMode="contain"
@@ -80,9 +80,26 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.Black,
   },
+  imageContainer: {
+    position: 'relative',
+    borderRadius: BORDER_RADIUS.radius_20,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: COLORS.Orange,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.Orange,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
   cardImage: {
     aspectRatio: 2 / 3,
-    borderRadius: BORDER_RADIUS.radius_20,
   },
   addButton: {
     position: "absolute",
@@ -97,11 +114,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   textTitle: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
+    fontFamily: FONT_FAMILY.poppins_bold,
+    fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
     textAlign: "center",
     paddingVertical: SPACING.space_10,
+    letterSpacing: 0.5,
   },
 });
 

@@ -1,13 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
   FlatList,
+  TouchableOpacity,
+  Text,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { COLORS, SPACING } from "../theme/theme";
+import { COLORS, SPACING, FONT_SIZE, FONT_FAMILY } from "../theme/theme";
 import {
   upComingMovie,
   nowPlayingMovie,
@@ -19,6 +21,7 @@ import CategogyHeader from "../components/CategogyHeader";
 import SubMoviesCard from "../components/SubMoviesCard";
 import MoviesCard from "../components/MoviesCard";
 import { fetchAllMovies } from "../service/movie.service";
+import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
@@ -77,6 +80,36 @@ const HomeScreen = ({ navigation }: any) => {
   const [moviesShechedule, setMoviesShechedule] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Refs for each FlatList
+  const scheduleListRef = useRef<FlatList>(null);
+  const nowPlayingListRef = useRef<FlatList>(null);
+  const popularListRef = useRef<FlatList>(null);
+  const upcomingListRef = useRef<FlatList>(null);
+
+  // Track current scroll positions
+  const [scrollPositions, setScrollPositions] = useState({
+    schedule: 0,
+    nowPlaying: 0,
+    popular: 0,
+    upcoming: 0,
+  });
+
+  // Track selected center item for each section
+  const [centerItems, setCenterItems] = useState({
+    schedule: 0,
+    nowPlaying: 0,
+    popular: 0,
+    upcoming: 0,
+  });
+
+  // Debounce state to prevent quick clicks during scroll
+  const [isScrolling, setIsScrolling] = useState({
+    schedule: false,
+    nowPlaying: false,
+    popular: false,
+    upcoming: false,
+  });
+
   // ✅ Fetch TMDB dữ liệu chỉ 1 lần
   useEffect(() => {
     (async () => {
@@ -113,6 +146,84 @@ const HomeScreen = ({ navigation }: any) => {
     navigation.navigate("Search", { query: text });
   };
 
+  const handleMoviePress = (index: number, movieId: number, sectionKey: string, itemWidth: number, listRef: any) => {
+    // Ngăn chặn click khi đang scroll
+    if (isScrolling[sectionKey as keyof typeof isScrolling]) {
+      return;
+    }
+
+    const centerIndex = centerItems[sectionKey as keyof typeof centerItems];
+    
+    // Chỉ vào chi tiết nếu đang ở giữa VÀ đã click vào phim đó rồi
+    if (index === centerIndex) {
+      navigation.navigate("MovieDetails", { id: movieId });
+    } else {
+      // Bắt đầu scroll
+      setIsScrolling({ ...isScrolling, [sectionKey]: true });
+      setCenterItems({ ...centerItems, [sectionKey]: index });
+      
+      listRef.current?.scrollToIndex({
+        index: index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+
+      // Cho phép click lại sau 500ms
+      setTimeout(() => {
+        setIsScrolling({ ...isScrolling, [sectionKey]: false });
+      }, 500);
+    }
+  };
+
+  const getListRef = (sectionTitle: string) => {
+    switch (sectionTitle) {
+      case "Movies Schedule":
+        return scheduleListRef;
+      case "Now Playing":
+        return nowPlayingListRef;
+      case "Popular Movies":
+        return popularListRef;
+      case "Upcoming Movies":
+        return upcomingListRef;
+      default:
+        return null;
+    }
+  };
+
+  const getItemWidth = (sectionTitle: string) => {
+    return sectionTitle === "Movies Schedule"
+      ? width * 0.7 + SPACING.space_24
+      : width / 2;
+  };
+
+  const getSectionKey = (sectionTitle: string) => {
+    switch (sectionTitle) {
+      case "Movies Schedule":
+        return 'schedule';
+      case "Now Playing":
+        return 'nowPlaying';
+      case "Popular Movies":
+        return 'popular';
+      case "Upcoming Movies":
+        return 'upcoming';
+      default:
+        return 'schedule';
+    }
+  };
+
+  const getInitialScrollIndex = (sectionTitle: string) => {
+    // Chỉ Movies Schedule bắt đầu từ 0, các section khác không scroll ban đầu
+    return sectionTitle === "Movies Schedule" ? 0 : undefined;
+  };
+
+  const getContentOffset = (sectionTitle: string) => {
+    if (sectionTitle === "Movies Schedule") {
+      return SPACING.space_28;
+    }
+    const cardWidth = width * 0.45;
+    return (width - cardWidth) / 2 - 35;
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, styles.container]}>
@@ -139,11 +250,20 @@ const HomeScreen = ({ navigation }: any) => {
           <InputHeader searchFunction={searchMoviesFuntion} />
         </View>
       }
-      renderItem={({ item }) => (
+      renderItem={({ item }) => {
+        const listRef = getListRef(item.title);
+        const itemWidth = getItemWidth(item.title);
+        const sectionKey = getSectionKey(item.title);
+        const currentPos = scrollPositions[sectionKey as keyof typeof scrollPositions];
+        const canGoPrev = currentPos > 0;
+        const canGoNext = item.data && item.data.length > 1;
+        
+        return (
         <View>
           <CategogyHeader title={item.title} />
           {item.data && item.data.length > 0 ? (
             <FlatList
+              ref={getListRef(item.title)}
               data={item.data}
               keyExtractor={(movie: any, index: number) =>
                 `${movie?.id ?? movie?.tmdb_id ?? movie?.title ?? "movie"}-${index}`
@@ -156,14 +276,12 @@ const HomeScreen = ({ navigation }: any) => {
               {...(item.title === "Movies Schedule" && {
                 snapToInterval: width * 0.7 + SPACING.space_36,
               })}
-              ListHeaderComponent={<View style={{ width: SPACING.space_28 }} />}
-              ListFooterComponent={<View style={{ width: SPACING.space_28 }} />}
-              renderItem={({ item: movie }) =>
+              ListHeaderComponent={<View style={{ width: getContentOffset(item.title) }} />}
+              ListFooterComponent={<View style={{ width: getContentOffset(item.title) }} />}
+              renderItem={({ item: movie, index }) =>
                 item.title === "Movies Schedule" ? (
                   <MoviesCard
-                    onPress={() =>
-                      navigation.navigate("MovieDetails", { id: movie.tmdb_id })
-                    }
+                    onPress={() => handleMoviePress(index, movie.tmdb_id, sectionKey, itemWidth, listRef)}
                     cardWidth={width * 0.7}
                     title={movie.title}
                     imagePath={baseImagePath("w780", movie.poster_path)}
@@ -177,10 +295,8 @@ const HomeScreen = ({ navigation }: any) => {
                   />
                 ) : (
                   <SubMoviesCard
-                    onPress={() =>
-                      navigation.navigate("MovieDetails", { id: movie.id })
-                    }
-                    cardWidth={width / 2 - SPACING.space_24}
+                    onPress={() => handleMoviePress(index, movie.id, sectionKey, itemWidth, listRef)}
+                    cardWidth={width * 0.45}
                     title={movie.original_title}
                     imagePath={baseImagePath("w342", movie.poster_path)}
                     shouldMarginateAtEnd={false}
@@ -198,9 +314,10 @@ const HomeScreen = ({ navigation }: any) => {
             <View style={{ padding: SPACING.space_15 }}>
               <CategogyHeader title={"Không có dữ liệu phim."} />
             </View>
-          )}
+          )}  
         </View>
-      )}
+      );
+      }}
     />
   );
 };
@@ -224,5 +341,10 @@ const styles = StyleSheet.create({
   },
   containerGap36: {
     gap: SPACING.space_24,
+  },
+  categoryTitle: {
+    fontSize: FONT_SIZE.size_20,
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    color: COLORS.White,
   },
 });

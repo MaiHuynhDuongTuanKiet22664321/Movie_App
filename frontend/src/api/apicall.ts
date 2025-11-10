@@ -6,7 +6,7 @@ export const baseImagePath = (size: string, path: string) => {
 const language = "vi-VN"; 
 
 export const nowPlayingMovie: string = 
-  `https://api.themoviedb.org/3/movie/now_playing?api_key=${apikey}&language=${language}`;
+  `https://api.themoviedb.org/3/movie/now_playing?api_key=${apikey}&language=${language}&with_runtime.gte=60`;
 
 export const upComingMovie: string = 
   `https://api.themoviedb.org/3/movie/upcoming?api_key=${apikey}&language=${language}`;
@@ -24,6 +24,10 @@ export const movieDetails = (id: number) => {
 
 export const movieCastDetails = (id: number) => {
   return `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apikey}&language=${language}`;
+};
+
+export const movieImages = (id: number) => {
+  return `https://api.themoviedb.org/3/movie/${id}/images?api_key=${apikey}`;
 };
 
 
