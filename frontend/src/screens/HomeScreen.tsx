@@ -62,10 +62,14 @@ const getUpComingMoviesList = async () => {
 // Fetch từ backend
 const getMoviesShechedule = async () => {
   try {
+    console.log("Fetching movies from backend...");
     let res = await fetchAllMovies();
-    if (Array.isArray(res.data)) {
+    console.log("Movies response:", res);
+    if (res && res.success && Array.isArray(res.data)) {
+      console.log("Movies data:", res.data);
       return res.data;
     }
+    console.log("No movies data or invalid format");
     return [];
   } catch (error) {
     console.error("Error fetching Movie Schedule:", error);
@@ -281,16 +285,24 @@ const HomeScreen = ({ navigation }: any) => {
               renderItem={({ item: movie, index }) =>
                 item.title === "Movies Schedule" ? (
                   <MoviesCard
-                    onPress={() => handleMoviePress(index, movie.tmdb_id, sectionKey, itemWidth, listRef)}
+                    onPress={() => {
+                      navigation.navigate("MovieScheduleScreen", {
+                        id: movie.tmdbId,
+                        movieData: movie
+                      });
+                    }}
                     cardWidth={width * 0.7}
                     title={movie.title}
-                    imagePath={baseImagePath("w780", movie.poster_path)}
+                    imagePath={movie.posterUrl || baseImagePath("w780", movie.poster_path)}
                     shouldMarginateAtEnd={false}
-                    genre={movie.genre_ids ? movie.genre_ids.slice(1, 4) : []}
-                    vote_average={movie.vote_average}
-                    vote_count={movie.vote_count}
+                    genre={movie.genres ? movie.genres.map((g: any) => g.id) : movie.genre_ids ? movie.genre_ids.slice(1, 4) : []}
+                    vote_average={movie.voteAverage || movie.vote_average}
+                    vote_count={movie.voteCount || movie.vote_count}
                     onAddPress={() =>
-                      navigation.navigate("MovieScheduleScreen_AD", {})
+                      navigation.navigate("MovieScheduleScreen", {
+                        id: movie.tmdbId,
+                        movieData: movie
+                      })
                     }
                   />
                 ) : (
@@ -302,7 +314,7 @@ const HomeScreen = ({ navigation }: any) => {
                     shouldMarginateAtEnd={false}
                     shouldMarginateAround={true}
                     onAddPress={() =>
-                      navigation.navigate("MovieScheduleScreen_AD", {
+                      navigation.navigate("MovieScheduleScreen", {
                         id: movie.id,
                       })
                     }

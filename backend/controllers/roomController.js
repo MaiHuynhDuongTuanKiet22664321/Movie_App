@@ -59,6 +59,17 @@ export const updateRoom = async (req, res) => {
 
 export const deleteRoom = async (req, res) => {
   try {
+    // Check if room is being used in any schedule
+    const Schedule = (await import('../models/Schedule.js')).default;
+    const schedulesUsingRoom = await Schedule.countDocuments({ room: req.params.id });
+    
+    if (schedulesUsingRoom > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Không thể xóa phòng vì đang có ${schedulesUsingRoom} lịch chiếu sử dụng phòng này`,
+      });
+    }
+
     const room = await Room.findByIdAndDelete(req.params.id);
     if (!room) return res.status(404).json({ success: false, message: "Không tìm thấy phòng" });
     res.json({ success: true, message: "Xóa thành công" });

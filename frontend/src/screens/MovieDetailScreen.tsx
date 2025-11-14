@@ -238,7 +238,7 @@ const MovieDetailScreen = ({ navigation, route }: any) => {
           <TouchableOpacity
             style={styles.buttonBG}
             onPress={() => {
-              navigation.push("MovieScheduleScreen_AD", {
+              navigation.push("MovieScheduleScreen", {
                 id: movieData.id,
                 PosterImage: baseImagePath("original", movieData.poster_path),
                 nameMovie: movieData.original_title,

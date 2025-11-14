@@ -1,16 +1,19 @@
 import express from 'express';
 import {
-    getAllMovies, getMovieById, createMovie, updateMovie, deleteMovie, checkMovieExists
+  getAllMovies,
+  getMovieById,
+  addMovie,
+  updateMovieStatus,
+  deleteMovie,
 } from '../controllers/movieController.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Routes for movie operations  
-router.get('/getall', getAllMovies);
+router.get('/', getAllMovies);
 router.get('/:id', getMovieById);
-router.post('/create', createMovie);
-router.put('/:id', updateMovie);
-router.delete('/:id', deleteMovie);
-router.get('/exists/:tmdb_id', checkMovieExists);
+router.post('/', protect, addMovie);
+router.patch('/:id/status', protect, updateMovieStatus);
+router.delete('/:id', protect, deleteMovie);
 
 export default router;

@@ -55,6 +55,7 @@ export const SPACING: Spacing = {
 interface Color {
   Red:string,
   RedRGB:string,
+  RedRGBA15:string,
   Black: string;
   BlackRGB5: string;
   BlackRGB10: string;
@@ -63,10 +64,12 @@ interface Color {
   Grey: string;
   DarkGrey: string;
   Yellow: string;
+  Green: string;
   White:string;
   WhiteRGBA75:string;
   WhiteRGBA50:string;
   WhiteRGBA25:string;
+  WhiteRGBA15:string;
   WhiteRGBA10:string;
   WhiteRGBA5:string;
   WhiteRGBA2:string;
@@ -81,18 +84,21 @@ interface Color {
 export const COLORS: Color = {
   Red:"#FF0000",
   RedRGB:'rgba(236, 69, 69, 0.94)',
+  RedRGBA15:'rgba(255, 0, 0, 0.15)',
   Black: "#000000",
   BlackRGB5: 'rgba(253, 248, 248, 0.26)',
   BlackRGB10: 'rgba(0, 0, 0, 0.1)',
   Orange: "#f35714ff",
   OrangeRGBBA0: 'rgba(255, 165, 0, 0.1)',
   Grey: "#808080",
-  DarkGrey: "#A9A9A9",
-  Yellow: "#FFFF00",
+  DarkGrey: "#1a1a1a",
+  Yellow: "#FFD700",
+  Green: "#10B981",
   White: "#FFFFFF",
   WhiteRGBA75: 'rgba(255, 255, 255, 0.75)',
   WhiteRGBA50: 'rgba(255, 255, 255, 0.5)',
   WhiteRGBA25: 'rgba(255, 255, 255, 0.25)',
+  WhiteRGBA15: 'rgba(255, 255, 255, 0.15)',
   WhiteRGBA10: 'rgba(255, 255, 255, 0.1)',
   WhiteRGBA5: 'rgba(255, 255, 255, 0.05)',
   WhiteRGBA2: 'rgba(255, 255, 255, 0.02)',

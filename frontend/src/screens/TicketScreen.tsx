@@ -22,43 +22,84 @@ import {
 import MovieDetailsHeader from "../components/MovieDetailsHeader";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { LinearGradient } from "expo-linear-gradient";
+import { useUser } from "../context/UserContext";
+import AdminScheduleManagementScreen from "./AdminScheduleManagementScreen";
 
 const TicketScreen = ({ navigation, route }: any) => {
+  const { user } = useUser();
   const [ticketData, setTicketData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Khi mở màn hình: lấy ticket trong storage
+  // Nếu user là admin, hiển thị màn hình quản lý
+  if (user?.role === "admin") {
+    return <AdminScheduleManagementScreen navigation={navigation} />;
+  }
+
+  // Load ticket data từ route params hoặc API
   useEffect(() => {
-    (async () => {
+    const loadTicketData = async () => {
       try {
-        const ticket = await SecureStore.getItemAsync("ticket");
-        if (ticket) {
-          setTicketData(JSON.parse(ticket));
+        if (route.params?.ticketData) {
+          // Nếu có ticketData từ PaymentScreen
+          const ticket = route.params.ticketData;
+          const formattedData = {
+            _id: ticket._id,
+            PosterImage: ticket.scheduleId.movie.posterUrl,
+            movieTitle: ticket.scheduleId.movie.title,
+            date: {
+              date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
+              day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", { weekday: "long" }),
+            },
+            time: ticket.scheduleId.time,
+            room: ticket.scheduleId.room.name,
+            seatArray: ticket.bookedSeats,
+            totalPrice: ticket.totalPrice,
+            transactionId: ticket.transactionId,
+          };
+          setTicketData(formattedData);
+          await SecureStore.setItemAsync("lastTicket", JSON.stringify(formattedData));
+        } else if (route.params?.ticketId) {
+          // Nếu chỉ có ticketId, gọi API để lấy chi tiết
+          const { bookingApi } = await import("../api/bookingApi");
+          const result = await bookingApi.getTicketById(route.params.ticketId);
+          if (result.success) {
+            const ticket = result.data;
+            const formattedData = {
+              _id: ticket._id,
+              PosterImage: ticket.scheduleId.movie.posterUrl,
+              movieTitle: ticket.scheduleId.movie.title,
+              date: {
+                date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
+                day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", { weekday: "long" }),
+              },
+              time: ticket.scheduleId.time,
+              room: ticket.scheduleId.room.name,
+              seatArray: ticket.bookedSeats,
+              totalPrice: ticket.totalPrice,
+              transactionId: ticket.transactionId,
+            };
+            setTicketData(formattedData);
+            await SecureStore.setItemAsync("lastTicket", JSON.stringify(formattedData));
+          }
+        } else {
+          // Không có params, load từ storage
+          const lastTicket = await SecureStore.getItemAsync("lastTicket");
+          if (lastTicket) {
+            setTicketData(JSON.parse(lastTicket));
+          }
         }
       } catch (error) {
-        console.error("Something went wrong while getting ticket:", error);
+        console.error("Error loading ticket:", error);
+      } finally {
+        setLoading(false);
       }
-    })();
-  }, []);
+    };
 
-  // Khi có route.params mới: set state và lưu xuống storage
-  useEffect(() => {
-    if (route.params) {
-      setTicketData(route.params);
-      (async () => {
-        try {
-          await SecureStore.setItemAsync(
-            "ticket",
-            JSON.stringify(route.params)
-          );
-        } catch (error) {
-          console.error("Something went wrong while saving ticket:", error);
-        }
-      })();
-    }
+    loadTicketData();
   }, [route.params]);
 
   // 🔹 Nếu chưa có dữ liệu ticket - hiển thị no-ticket
-  if (!ticketData) {
+  if (loading || !ticketData) {
     return (
       <SafeAreaView style={styles.safeAreaViewContainer}>
         <View style={styles.container}>
@@ -68,9 +109,11 @@ const TicketScreen = ({ navigation, route }: any) => {
               source={require("../assets/image/no-ticket.png")}
               style={styles.noTicketImage}
             />
-            <Text style={styles.noTicketText}>No Tickets Yet</Text>
+            <Text style={styles.noTicketText}>
+              {loading ? "Đang tải..." : "Chưa có vé"}
+            </Text>
             <Text style={styles.noTicketSubText}>
-              Book your favorite movie to see tickets here
+              {loading ? "Vui lòng đợi..." : "Đặt vé xem phim yêu thích để xem vé tại đây"}
             </Text>
           </View>
         </View>

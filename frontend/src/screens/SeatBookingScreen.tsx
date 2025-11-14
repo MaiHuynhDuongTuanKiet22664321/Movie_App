@@ -1,490 +1,483 @@
-import { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
   ScrollView,
-  StatusBar,
   TouchableOpacity,
-  FlatList,
-  Dimensions,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import {
-  BORDER_RADIUS,
   COLORS,
+  SPACING,
   FONT_FAMILY,
   FONT_SIZE,
-  SPACING,
+  BORDER_RADIUS,
 } from "../theme/theme";
-import * as SecureStore from "expo-secure-store";
-import MovieDetailsHeader from "../components/MovieDetailsHeader";
-import { LinearGradient } from "expo-linear-gradient";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import Toast from "react-native-toast-message";
-import Svg, { Defs, ClipPath, Image as SvgImage } from "react-native-svg";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-
-// Mock data removed - will be fetched from backend
-const timeArray: string[] = [];
-
-const generateDates = () => {
-  // Will be replaced with backend data
-  return [];
-};
-
-const generateSeats = () => {
-  // Mock data removed - will be fetched from backend based on room and schedule
-  return [];
-};
-
-const { width } = Dimensions.get("window");
-const height = 260;
-const bottomCurveHeight = 50;
-const topCurveHeight = 50;
+import { JSX } from "react/jsx-runtime";
 
 const SeatBookingScreen = ({ navigation, route }: any) => {
-  const [dateArray, setdateArray] = useState<any>(generateDates());
-  const [selectedDateIndex, setSelectedDateIndex] = useState<any>();
-  const [price, setPrice] = useState<number>(0);
-  const [twoDSeatArray, setTwoDSeatArray] = useState<any>();
-  const [selectedSeatArray, setSelectedSeatArray] = useState<any>([]);
-  const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
-  const checkSelectedDateTime = useMemo(() => {
-    // Seat data should be fetched from backend when date and time are selected
-    // setTwoDSeatArray should be populated from API response
-    return selectedDateIndex !== undefined && selectedTimeIndex !== undefined;
-  }, [selectedDateIndex, selectedTimeIndex]);
+  const { scheduleId, movieData, schedule } = route.params;
+  const [seats, setSeats] = useState<any[]>([]);
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const BookSeats = async () => {
-    if (
-      selectedSeatArray.length !== 0 &&
-      timeArray[selectedTimeIndex] !== undefined &&
-      dateArray[selectedDateIndex] !== undefined
-    ) {
-      try {
-        // Lưu vé vào SecureStore
-        await SecureStore.setItemAsync(
-          "ticket",
-          JSON.stringify({
-            seatArray: selectedSeatArray,
-            time: timeArray[selectedTimeIndex],
-            date: dateArray[selectedDateIndex],
-            PosterImage: route.params.PosterImage,
-            price: price,
-          })
-        );
-      } catch (error) {
-        console.error(
-          "Something went Wrong while storing in BookSeats Functions",
-          error
-        );
-      }
+  const seatIconSize = 32;
+  const seatGap = 6;
+  const aisleWidth = 20;
 
-      // Điều hướng sang Payment + gửi params
-      navigation.navigate("Payment", {
-        seatArray: selectedSeatArray,
-        time: timeArray[selectedTimeIndex],
-        date: dateArray[selectedDateIndex],
-        PosterImage: route.params.PosterImage,
-        nameMovie: route.params.nameMovie,
-        price: price,
-      });
-    } else {
-      Toast.show({
-        type: "error",
-        text1: "Please Select Seats, Date and Time of the Show",
-      });
-    }
-  };
+  useEffect(() => {
+    fetchSeats();
+  }, []);
 
-  const selectedSeatArr = (index: number, subIndex: number, num: number) => {
-    if (!twoDSeatArray[index][subIndex].taken) {
-      let array: any = [...selectedSeatArray];
-      let temp = [...twoDSeatArray];
-      temp[index][subIndex].selected = !temp[index][subIndex].selected;
-      if (!array.includes(num)) {
-        array.push(num);
-        setSelectedSeatArray(array);
+  const fetchSeats = async () => {
+    try {
+      const { roomApi } = await import("../api/adminApi");
+      const roomResult = await roomApi.getById(schedule.room._id);
+      
+      if (roomResult.success && roomResult.data.sodoghe) {
+        setSeats(roomResult.data.sodoghe);
       } else {
-        const tempIndex = array.indexOf(num);
-        if (tempIndex > -1) {
-          array.splice(tempIndex, 1);
-          setSelectedSeatArray(array);
-        }
+        setSeats([]);
       }
-      setPrice(array.length * 5.0);
-      setTwoDSeatArray(temp);
+    } catch (error) {
+      console.error("Error fetching seats:", error);
+      setSeats([]);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const getSeatId = (seat: any) => `${seat.row}${seat.number}`;
+
+  const getSeatStatus = (seatId: string): "selected" | "available" | "booked" => {
+    if (selectedSeats.includes(seatId)) return "selected";
+    // TODO: Check booked seats from schedule
+    return "available";
+  };
+
+  const getSeatColor = (status: string, isVIP: boolean = false) => {
+    if (status === "booked") return COLORS.Red;
+    if (status === "selected") return "#00D9FF"; // Cyan nổi bật
+    return isVIP ? COLORS.Yellow : COLORS.Green;
+  };
+
+  const isVIPSeat = (seat: any) => seat.row === "A";
+
+  const toggleSeat = (seatId: string, status: string) => {
+    if (status === "booked" || status === "unavailable") return;
+
+    if (selectedSeats.includes(seatId)) {
+      setSelectedSeats(selectedSeats.filter((id) => id !== seatId));
+    } else {
+      setSelectedSeats([...selectedSeats, seatId]);
+    }
+  };
+
+  const groupSeatsByRow = (): { [key: string]: any[] } => {
+    const grouped: { [key: string]: any[] } = {};
+    seats.forEach((seat: any) => {
+      if (!grouped[seat.row]) {
+        grouped[seat.row] = [];
+      }
+      grouped[seat.row].push(seat);
+    });
+    return grouped;
+  };
+
+  const renderSeat = (seat: any) => {
+    const seatId = getSeatId(seat);
+    const status = getSeatStatus(seatId);
+    const isVIP = isVIPSeat(seat);
+    const isInteractive = status !== "booked";
+
+    return (
+      <TouchableOpacity
+        key={seatId}
+        disabled={!isInteractive}
+        onPress={() => toggleSeat(seatId, status)}
+        style={[styles.seatWrapper, { marginHorizontal: seatGap / 2 }]}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons
+          name="seat"
+          size={seatIconSize}
+          color={getSeatColor(status, isVIP)}
+        />
+        <Text style={[styles.seatLabel, isVIP && styles.vipLabel]}>
+          {seatId}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderRow = (row: string, rowSeats: any[]): JSX.Element => {
+    const sortedSeats = rowSeats.sort((a: any, b: any) => a.number - b.number);
+    const isVIP = row === "A";
+    const seats : any = [];
+    
+    // Render ghế với lối đi ở giữa
+    sortedSeats.forEach((seat, index) => {
+      seats.push(renderSeat(seat));
+      
+      // Thêm lối đi sau ghế số 3 (giữa hàng)
+      if (seat.number === 3) {
+        seats.push(
+          <View key={`aisle-${row}`} style={{ width: aisleWidth }}>
+            <Text style={styles.aisleText}>|</Text>
+          </View>
+        );
+      }
+    });
+
+    return (
+      <View key={row} style={styles.row}>
+        <View style={[styles.rowLabel, isVIP && styles.vipRowLabel]}>
+          <Text style={[styles.rowLabelText, isVIP && styles.vipRowLabelText]}>
+            {row}
+          </Text>
+        </View>
+        <View style={styles.seatsContainer}>{seats}</View>
+      </View>
+    );
+  };
+
+  const calculateTotal = () => {
+    const basePrice = schedule.basePrice || 75000;
+    let total = 0;
+    
+    selectedSeats.forEach((seatId) => {
+      const row = seatId.charAt(0);
+      const isVIP = row === "A";
+      total += isVIP ? basePrice * 1.3 : basePrice;
+    });
+    
+    return Math.round(total);
+  };
+
+  const handleContinue = () => {
+    if (selectedSeats.length === 0) {
+      Alert.alert("Thông báo", "Vui lòng chọn ít nhất một ghế");
+      return;
+    }
+
+    navigation.navigate("Payment", {
+      scheduleId,
+      movieData,
+      schedule,
+      selectedSeats,
+      totalPrice: calculateTotal(),
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.Orange} />
+      </View>
+    );
+  }
+
+  const groupedSeats = groupSeatsByRow();
+  const rows = Object.keys(groupedSeats).sort();
 
   return (
-    <SafeAreaView style={styles.safeAreaViewcontainer}>
-      <ScrollView style={styles.container} bounces={false}>
-        <StatusBar hidden />
-        <View>
-          {/* Banner cong */}
-          <View style={{ width: width, height }}>
-            <Svg width={width} height={height}>
-              <Defs>
-                <ClipPath id="clip">
-                  <path
-                    d={`
-                      M0,${topCurveHeight} 
-                      Q${width / 2},0 ${width},${topCurveHeight}  
-                      L${width},${height - bottomCurveHeight}      
-                      Q${width / 2},${height - bottomCurveHeight * 2.0} 0,${
-                      height - bottomCurveHeight
-                    } 
-                      L0,${topCurveHeight}                         
-                      Z
-                    `}
-                    fill="white"
-                  />
-                </ClipPath>
-              </Defs>
-
-              <SvgImage
-                width={width}
-                height={height}
-                preserveAspectRatio="xMidYMid slice"
-                href={{ uri: route.params.PosterImage }}
-                clipPath="url(#clip)"
-              />
-            </Svg>
-            {/* Gradient phủ + Header */}
-            <LinearGradient
-              colors={[COLORS.BlackRGB10, COLORS.Black]}
-              style={[StyleSheet.absoluteFill, { height }]}
-            >
-              <View style={styles.appHeaderContainer}>
-                <MovieDetailsHeader
-                  nameIcon="close-circle-outline"
-                  header=""
-                  action={() => navigation.goBack()}
-                />
-              </View>
-            </LinearGradient>
-          </View>
-
-          <View>
-            <FlatList
-              data={dateArray}
-              keyExtractor={(item) => item.date}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.containerGap24}
-              renderItem={({ item, index }) => {
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedDateIndex(index);
-                    }}
-                  >
-                    <View
-                      style={[
-                        styles.dateContainer,
-                        index === 0
-                          ? { marginLeft: SPACING.space_24 }
-                          : index === dateArray.length - 1
-                          ? { marginRight: SPACING.space_24 }
-                          : {},
-
-                        selectedDateIndex === index
-                          ? { backgroundColor: COLORS.Orange }
-                          : {},
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.dateText,
-                          selectedDateIndex === index
-                            ? { color: COLORS.White }
-                            : {},
-                        ]}
-                      >
-                        {item.date}
-                      </Text>
-                      <Text style={styles.dayText}>{item.day}</Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-
-          <View style={styles.OutterContainer}>
-            <FlatList
-              data={timeArray}
-              keyExtractor={(item) => item}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              bounces={false}
-              contentContainerStyle={styles.containerGap24}
-              renderItem={({ item, index }) => {
-                return (
-                  <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
-                    <View
-                      style={[
-                        styles.timeContainer,
-                        index === 0
-                          ? { marginLeft: SPACING.space_24 }
-                          : index === timeArray.length - 1
-                          ? { marginRight: SPACING.space_24 }
-                          : {},
-                        index === selectedTimeIndex
-                          ? { backgroundColor: COLORS.Orange }
-                          : {},
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.timeText,
-                          selectedTimeIndex === index
-                            ? { color: COLORS.White }
-                            : {},
-                        ]}
-                      >
-                        {item}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-          <Text style={styles.screenText}>Screen this side</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <FontAwesome6 name="arrow-left" size={20} color={COLORS.White} />
+        </TouchableOpacity>
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {movieData.title}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {new Date(schedule.date).toLocaleDateString("vi-VN")} • {schedule.time} • {schedule.room?.name}
+          </Text>
         </View>
-        {checkSelectedDateTime && (
-          <>
-            <View style={styles.seatContainer}>
-              <View style={styles.containerGap20}>
-                {twoDSeatArray.map((item: any, index: number) => {
-                  return (
-                    <View key={index} style={styles.seatRow}>
-                      {item?.map((subItem: any, subIndex: number) => {
-                        return (
-                          <TouchableOpacity
-                            key={subIndex}
-                            onPress={() => {
-                              selectedSeatArr(index, subIndex, subItem.number);
-                            }}
-                          >
-                            <MaterialIcons
-                              name="event-seat"
-                              style={[
-                                styles.seatIcon,
-                                subItem.taken ? { color: COLORS.Grey } : {},
-                                subItem.selected
-                                  ? { color: COLORS.Orange }
-                                  : {},
-                              ]}
-                            />
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  );
-                })}
-              </View>
-              <View style={styles.seatRadioContainer}>
-                <View style={styles.radioContainer}>
-                  <MaterialIcons
-                    name="radio-button-on"
-                    style={[styles.radioIcon]}
-                  />
-                  <Text style={styles.radioText}>Available</Text>
-                </View>
+      </View>
 
-                <View style={styles.radioContainer}>
-                  <MaterialIcons
-                    name="radio-button-on"
-                    style={[styles.radioIcon, { color: COLORS.Grey }]}
-                  />
-                  <Text style={styles.radioText}>Taken</Text>
-                </View>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Screen */}
+        <View style={styles.screenContainer}>
+          <View style={styles.screen}>
+            <MaterialCommunityIcons name="television" size={20} color={COLORS.WhiteRGBA50} />
+            <Text style={styles.screenText}>MÀN HÌNH</Text>
+          </View>
+        </View>
 
-                <View style={styles.radioContainer}>
-                  <MaterialIcons
-                    name="radio-button-on"
-                    style={[styles.radioIcon, { color: COLORS.Orange }]}
-                  />
-                  <Text style={styles.radioText}>Selected</Text>
-                </View>
-              </View>
+        {/* Seat Map */}
+        <View style={styles.seatMapContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.seatMapScroll}
+          >
+            <View style={styles.seatsGrid}>
+              {rows.map((row) => renderRow(row, groupedSeats[row]))}
             </View>
-            <View style={styles.buttonPriceContainer}>
-              <View style={styles.priceContainer}>
-                <Text style={styles.totalPriceText}>Total Price</Text>
-                <Text style={styles.price}>$ {price}.00</Text>
-              </View>
-              <TouchableOpacity
-                onPress={BookSeats}
-                style={styles.buttonBookSeat}
-              >
-                <MaterialCommunityIcons
-                  name="ticket"
-                  style={styles.ticketIcon}
-                />
-                <Text style={styles.buttonText}>Buy Tickets</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+          </ScrollView>
+        </View>
+
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <MaterialCommunityIcons name="seat" size={20} color={COLORS.Green} />
+            <Text style={styles.legendText}>Trống</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <MaterialCommunityIcons name="seat" size={20} color={COLORS.Yellow} />
+            <Text style={styles.legendText}>VIP</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <MaterialCommunityIcons name="seat" size={20} color="#00D9FF" />
+            <Text style={styles.legendText}>Đã chọn</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <MaterialCommunityIcons name="seat" size={20} color={COLORS.Red} />
+            <Text style={styles.legendText}>Đã đặt</Text>
+          </View>
+        </View>
       </ScrollView>
+
+      {/* Bottom Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.priceInfo}>
+          <Text style={styles.priceLabel}>
+            Ghế: <Text style={styles.priceValue}>
+              {selectedSeats.length > 0 ? selectedSeats.join(", ") : "Chưa chọn"}
+            </Text>
+          </Text>
+          <Text style={styles.totalLabel}>
+            Tổng: <Text style={styles.totalValue}>
+              {calculateTotal().toLocaleString("vi-VN")}đ
+            </Text>
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            selectedSeats.length === 0 && styles.continueButtonDisabled,
+          ]}
+          onPress={handleContinue}
+          disabled={selectedSeats.length === 0}
+        >
+          <Text style={styles.continueButtonText}>Tiếp tục</Text>
+          <FontAwesome6 name="arrow-right" size={16} color={COLORS.White} />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
-export default SeatBookingScreen;
-
 const styles = StyleSheet.create({
-  safeAreaViewcontainer: {
-    flex: 1,
-    backgroundColor: COLORS.Black,
-  },
   container: {
-    display: "flex",
     flex: 1,
     backgroundColor: COLORS.Black,
   },
-  imageBG: {
-    width: "100%",
-    aspectRatio: 3072 / 1727,
-    borderRadius: BORDER_RADIUS.radius_40,
-    overflow: "hidden",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.Black,
   },
-  linearGradient: {
-    height: "100%",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: SPACING.space_20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.WhiteRGBA15,
+    gap: SPACING.space_16,
   },
-  appHeaderContainer: {
-    marginHorizontal: SPACING.space_36,
-    marginTop: SPACING.space_10 * 4,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.DarkGrey,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_18,
+    color: COLORS.White,
+    marginBottom: SPACING.space_4,
+  },
+  headerSubtitle: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.WhiteRGBA75,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: SPACING.space_20,
+  },
+  screenContainer: {
+    alignItems: "center",
+    marginBottom: SPACING.space_24,
+  },
+  screen: {
+    width: "85%",
+    paddingVertical: SPACING.space_12,
+    backgroundColor: COLORS.WhiteRGBA10,
+    borderRadius: BORDER_RADIUS.radius_8,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.Orange,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.space_8,
   },
   screenText: {
-    textAlign: "center",
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_16,
-    color: COLORS.Orange,
-  },
-  seatContainer: {
-    marginVertical: SPACING.space_10 * 2,
-  },
-  containerGap20: {
-    gap: SPACING.space_10 * 2,
-  },
-  seatRow: {
-    flexDirection: "row",
-    gap: SPACING.space_16,
-    justifyContent: "center",
-  },
-  seatIcon: {
-    fontSize: FONT_SIZE.size_24,
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_12,
     color: COLORS.White,
+    letterSpacing: 3,
   },
-  seatRadioContainer: {
+  seatMapContainer: {
+    width: "100%",
+    marginBottom: SPACING.space_24,
+  },
+  seatMapScroll: {
+    paddingHorizontal: SPACING.space_16,
+  },
+  seatsGrid: {
+    alignItems: "flex-start",
+  },
+  row: {
     flexDirection: "row",
-    marginTop: SPACING.space_36,
+    alignItems: "center",
     marginBottom: SPACING.space_10,
-    alignItems: "center",
-    justifyContent: "space-evenly",
   },
-  radioContainer: {
-    flexDirection: "row",
-    gap: SPACING.space_10,
-    alignItems: "center",
-  },
-  radioIcon: {
-    fontSize: FONT_SIZE.size_20,
-    color: COLORS.White,
-  },
-  radioText: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.White,
-  },
-  containerGap24: {
-    gap: SPACING.space_24,
-  },
-  dateContainer: {
-    width: SPACING.space_10 * 6,
-    height: SPACING.space_10 * 8,
-    borderColor: COLORS.WhiteRGBA5,
-    borderRadius: SPACING.space_10 * 2,
-    backgroundColor: COLORS.BlackRGB5,
+  rowLabel: {
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: SPACING.space_12,
+    backgroundColor: COLORS.WhiteRGBA10,
+    borderRadius: BORDER_RADIUS.radius_8,
   },
-  dateText: {
+  rowLabelText: {
     fontFamily: FONT_FAMILY.poppins_bold,
-    fontSize: FONT_SIZE.size_24,
-    color: COLORS.White,
-  },
-  dayText: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.White,
-  },
-  OutterContainer: {
-    marginVertical: SPACING.space_24,
-  },
-  timeContainer: {
-    paddingVertical: SPACING.space_10,
-    borderWidth: 1,
-    borderColor: COLORS.BlackRGB5,
-    paddingHorizontal: SPACING.space_10 * 2,
-    borderRadius: BORDER_RADIUS.radius_20,
-    backgroundColor: COLORS.BlackRGB5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timeText: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
-  },
-  buttonPriceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingHorizontal: SPACING.space_24,
-    paddingBottom: SPACING.space_24,
-  },
-  priceContainer: {
-    alignItems: "center",
-  },
-  totalPriceText: {
-    fontFamily: FONT_FAMILY.poppins_regular,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.Orange,
   },
-  price: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_24,
-    color: COLORS.White,
+  vipRowLabel: {
+    backgroundColor: COLORS.Yellow + "20",
+    borderWidth: 1,
+    borderColor: COLORS.Yellow + "40",
   },
-  buttonBookSeat: {
+  vipRowLabelText: {
+    color: COLORS.Yellow,
+  },
+  seatsContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    borderRadius: BORDER_RADIUS.radius_24,
-    paddingHorizontal: SPACING.space_10,
-    paddingVertical: SPACING.space_10,
-    backgroundColor: COLORS.Orange,
   },
-  buttonText: {
-    borderRadius: BORDER_RADIUS.radius_24,
-    paddingHorizontal: SPACING.space_24,
-    paddingVertical: SPACING.space_10,
+  seatWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  seatLabel: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_8,
+    color: COLORS.WhiteRGBA75,
+    marginTop: 2,
+  },
+  vipLabel: {
+    color: COLORS.Yellow,
+  },
+  aisleText: {
+    fontFamily: FONT_FAMILY.poppins_thin,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.WhiteRGBA25,
+    textAlign: "center",
+  },
+  legend: {
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: SPACING.space_16,
+    paddingVertical: SPACING.space_16,
+    paddingHorizontal: SPACING.space_12,
+    backgroundColor: COLORS.DarkGrey,
+    borderRadius: BORDER_RADIUS.radius_12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.space_8,
+  },
+  legendText: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.WhiteRGBA75,
+  },
+  bottomBar: {
+    padding: SPACING.space_20,
+    backgroundColor: COLORS.DarkGrey,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.WhiteRGBA15,
+    gap: SPACING.space_16,
+  },
+  priceInfo: {
+    gap: SPACING.space_8,
+  },
+  priceLabel: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.WhiteRGBA75,
+  },
+  priceValue: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.White,
+  },
+  totalLabel: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
-    backgroundColor: COLORS.Orange,
   },
-  ticketIcon: {
-    fontSize: FONT_SIZE.size_24,
+  totalValue: {
+    fontFamily: FONT_FAMILY.poppins_bold,
+    fontSize: FONT_SIZE.size_20,
+    color: COLORS.Orange,
+  },
+  continueButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.space_12,
+    backgroundColor: COLORS.Orange,
+    paddingVertical: SPACING.space_16,
+    borderRadius: BORDER_RADIUS.radius_12,
+  },
+  continueButtonDisabled: {
+    backgroundColor: COLORS.WhiteRGBA25,
+  },
+  continueButtonText: {
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
-    paddingHorizontal: SPACING.space_4,
-    paddingVertical: SPACING.space_4,
   },
 });
+
+export default SeatBookingScreen;

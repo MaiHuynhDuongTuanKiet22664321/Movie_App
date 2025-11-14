@@ -14,9 +14,9 @@ const router = express.Router();
 
 router.get('/', getAllSchedules);
 router.get('/:id', getScheduleById);
-router.post('/', createSchedule);
-router.put('/:id', updateSchedule);
-router.delete('/:id', deleteSchedule);
+router.post('/', protect, createSchedule);
+router.put('/:id', protect, updateSchedule);
+router.delete('/:id', protect, deleteSchedule);
 router.post('/:id/book', protect, bookSeats);
 router.get('/movie/:movieId', getSchedulesByMovie);
 

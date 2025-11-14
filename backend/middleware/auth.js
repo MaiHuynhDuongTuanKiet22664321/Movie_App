@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // Protect routes - verify JWT token
 export const protect = async (req, res, next) => {
@@ -23,6 +24,18 @@ export const protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Get user from token
+      const user = await User.findById(decoded.userId).select('-password');
+      
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Người dùng không tồn tại.',
+        });
+      }
+      
+      req.user = user;
       req.userId = decoded.userId;
       next();
     } catch (error) {

@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import movieRoutes from './routes/movieRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

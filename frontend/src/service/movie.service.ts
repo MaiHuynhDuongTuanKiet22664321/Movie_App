@@ -3,9 +3,9 @@ export const BASE_URL =
 
 // API endpoints
 const MOVIE_ENDPOINTS = {
-  GETALL: `${BASE_URL}/api/movies/getall`,
+  GETALL: `${BASE_URL}/api/movies`,
   GETBYID: (id: string) => `${BASE_URL}/api/movies/${id}`,
-  CREATE: `${BASE_URL}/api/movies/create`,
+  CREATE: `${BASE_URL}/api/movies`,
   UPDATE: (id: string) => `${BASE_URL}/api/movies/${id}`,
   DELETE: (id: string) => `${BASE_URL}/api/movies/${id}`,
   EXISTS: (id: string) => `${BASE_URL}/api/movies/exists/${id}`,

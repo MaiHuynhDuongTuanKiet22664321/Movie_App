@@ -3,8 +3,7 @@ import TabNavigator from '../src/navigators/TabNavigator';
 import AuthScreen from '../src/screens/AuthScreen';
 import EditProfileScreen from '../src/screens/EditProfileScreen';
 import MovieDetailScreen from '../src/screens/MovieDetailScreen';
-import MovieScheduleScreen_AD from '../src/screens/MovieScheduleScreen_AD';
-import MovieScheduleSetupScreen_AD from '../src/screens/MovieScheduleSetupScreen_AD';
+import MovieScheduleScreen from '../src/screens/MovieScheduleScreen';
 import PaymentScreen from '../src/screens/PaymentScreen';
 import SeatBookingScreen from '../src/screens/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -38,13 +37,8 @@ const AppNavigator = () => {
         options={{ animation: "slide_from_right" }}
       />
       <Stack.Screen
-        name="MovieScheduleScreen_AD"
-        component={MovieScheduleScreen_AD}
-        options={{ animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="MovieScheduleSetupScreen_AD"
-        component={MovieScheduleSetupScreen_AD}
+        name="MovieScheduleScreen"
+        component={MovieScheduleScreen}
         options={{ animation: "slide_from_right" }}
       />
       <Stack.Screen
