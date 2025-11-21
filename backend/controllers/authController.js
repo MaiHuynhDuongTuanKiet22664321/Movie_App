@@ -2,7 +2,6 @@ import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// Generate JWT Token
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '1m',
@@ -12,7 +11,6 @@ const generateToken = (userId) => {
 
 export const register = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -23,7 +21,6 @@ export const register = async (req, res) => {
 
     const { fullName, email, password, phoneNumber } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({
@@ -32,7 +29,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Create new user
     const user = await User.create({
       fullName,
       email: email.toLowerCase(),
@@ -40,7 +36,6 @@ export const register = async (req, res) => {
       phoneNumber,
     });
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -67,12 +62,8 @@ export const register = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 export const login = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -83,7 +74,6 @@ export const login = async (req, res) => {
 
     const { email, password } = req.body;
 
-    // Find user and include password field
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       '+password'
     );
@@ -95,7 +85,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check password
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
       return res.status(401).json({
@@ -104,7 +93,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -131,9 +119,6 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Get current user
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -168,12 +153,8 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private (requires token)
 export const updateProfile = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -184,7 +165,6 @@ export const updateProfile = async (req, res) => {
 
     const { fullName, phoneNumber } = req.body;
 
-    // Find user by token (from middleware - req.userId)
     const user = await User.findById(req.userId);
 
     if (!user) {
@@ -194,7 +174,6 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-    // Update user fields (only allow updating fullName and phoneNumber)
     if (fullName) {
       user.fullName = fullName.trim();
     }

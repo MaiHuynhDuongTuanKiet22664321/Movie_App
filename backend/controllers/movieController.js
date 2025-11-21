@@ -1,6 +1,5 @@
 import Movie from '../models/Movie.js';
 
-// Get all movies in database
 export const getAllMovies = async (req, res) => {
   try {
     const movies = await Movie.find().sort({ addedAt: -1 });
@@ -16,7 +15,6 @@ export const getAllMovies = async (req, res) => {
   }
 };
 
-// Get movie by ID
 export const getMovieById = async (req, res) => {
   try {
     const movie = await Movie.findById(req.params.id);
@@ -38,7 +36,6 @@ export const getMovieById = async (req, res) => {
   }
 };
 
-// Add movie from TMDB to database
 export const addMovie = async (req, res) => {
   try {
     const {
@@ -56,9 +53,6 @@ export const addMovie = async (req, res) => {
       tagline,
     } = req.body;
 
-
-
-    // Check if movie already exists
     const existingMovie = await Movie.findOne({ tmdbId });
     if (existingMovie) {
       return res.status(400).json({
@@ -96,7 +90,6 @@ export const addMovie = async (req, res) => {
   }
 };
 
-// Update movie status
 export const updateMovieStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -126,10 +119,8 @@ export const updateMovieStatus = async (req, res) => {
   }
 };
 
-// Delete movie
 export const deleteMovie = async (req, res) => {
   try {
-    // Check if movie is being used in any schedule
     const Schedule = (await import('../models/Schedule.js')).default;
     const schedulesUsingMovie = await Schedule.countDocuments({ movie: req.params.id });
     

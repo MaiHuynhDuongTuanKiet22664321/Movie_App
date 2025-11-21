@@ -28,7 +28,6 @@ export const createSchedule = async (req, res) => {
   try {
     const { movie, room, date, time, basePrice = 75000 } = req.body;
 
-    // Chuyển date sang format YYYY-MM-DD
     const dateObj = new Date(date);
     const dateString = dateObj.toISOString().split('T')[0];
 

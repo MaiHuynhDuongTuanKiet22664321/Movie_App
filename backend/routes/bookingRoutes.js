@@ -1,5 +1,5 @@
 import express from 'express';
-import { createBooking, getUserTickets, getTicketById } from '../controllers/bookingController.js';
+import { createBooking, getUserTickets, getTicketById, checkPayment } from '../controllers/bookingController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.get('/', getUserTickets);
 
 // GET /api/bookings/:id - Lấy chi tiết 1 vé
 router.get('/:id', getTicketById);
+
+// POST /api/bookings/payment/check - Kiểm tra thanh toán (SePay proxy)
+router.post('/payment/check', checkPayment);
 
 export default router;

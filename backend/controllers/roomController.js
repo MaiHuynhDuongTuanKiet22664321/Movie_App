@@ -59,7 +59,6 @@ export const updateRoom = async (req, res) => {
 
 export const deleteRoom = async (req, res) => {
   try {
-    // Check if room is being used in any schedule
     const Schedule = (await import('../models/Schedule.js')).default;
     const schedulesUsingRoom = await Schedule.countDocuments({ room: req.params.id });
     

@@ -2,7 +2,6 @@ import Ticket from '../models/Ticket.js';
 import Schedule from '../models/Schedule.js';
 import mongoose from 'mongoose';
 
-// Tạo booking mới
 export const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -11,7 +10,6 @@ export const createBooking = async (req, res) => {
     const { scheduleId, selectedSeats, totalPrice, paymentMethod } = req.body;
     const userId = req.user._id;
 
-    // Validate input
     if (!scheduleId || !selectedSeats || selectedSeats.length === 0 || !totalPrice) {
       await session.abortTransaction();
       return res.status(400).json({
@@ -20,7 +18,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Kiểm tra scheduleId hợp lệ
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       await session.abortTransaction();
       return res.status(400).json({
@@ -29,7 +26,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Kiểm tra schedule tồn tại
     const schedule = await Schedule.findById(scheduleId)
       .populate('movie')
       .populate('room')
@@ -43,7 +39,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Kiểm tra ghế đã được đặt chưa
     const bookedSeats = schedule.seatStatuses
       .filter(seat => seat.status === 'booked')
       .map(seat => `${seat.row}${seat.number}`);
@@ -58,7 +53,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Cập nhật trạng thái ghế trong schedule
     selectedSeats.forEach(seatId => {
       const row = seatId.charAt(0);
       const number = parseInt(seatId.substring(1));
@@ -75,10 +69,8 @@ export const createBooking = async (req, res) => {
 
     await schedule.save({ session });
 
-    // Tạo mã giao dịch unique
     const transactionId = `TXN${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 
-    // Tạo ticket mới
     const ticket = await Ticket.create([{
       userId,
       scheduleId,
@@ -90,7 +82,6 @@ export const createBooking = async (req, res) => {
 
     await session.commitTransaction();
 
-    // Populate thông tin chi tiết
     const populatedTicket = await Ticket.findById(ticket[0]._id)
       .populate({
         path: 'scheduleId',
@@ -118,7 +109,6 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// Lấy danh sách vé của user
 export const getUserTickets = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -146,7 +136,6 @@ export const getUserTickets = async (req, res) => {
   }
 };
 
-// Lấy chi tiết 1 vé
 export const getTicketById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,6 +167,61 @@ export const getTicketById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy thông tin vé',
+    });
+  }
+};
+
+export const checkPayment = async (req, res) => {
+  try {
+    const { orderCode, totalPrice } = req.body;
+
+    const SEPAY_API_TOKEN = process.env.SEPAY_API_TOKEN || "FASDHEFS4W2JIYCB3GIHCYLZS7WXKUELWWOD625QDVKRZ3NVPTMTHFBKH5BDLGOU";
+
+    const response = await fetch("https://my.sepay.vn/userapi/transactions/list", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${SEPAY_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      console.warn("SePay API response not OK:", response.status);
+      return res.status(200).json({
+        success: true,
+        isPaid: null,
+        message: "Không thể kiểm tra thanh toán lúc này",
+      });
+    }
+
+    const data = await response.json();
+
+    if (data.status === 200 && data.transactions && Array.isArray(data.transactions)) {
+      const isPaid = data.transactions.some((trans) => {
+        const amountMatch = parseFloat(trans.amount_in) >= totalPrice;
+        const contentMatch = trans.transaction_content?.includes(orderCode);
+        return amountMatch && contentMatch;
+      });
+
+      return res.status(200).json({
+        success: true,
+        isPaid: isPaid,
+        message: isPaid ? "Đã nhận được thanh toán" : "Chưa nhận được thanh toán",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      isPaid: false,
+      message: "Chưa nhận được thanh toán",
+    });
+
+  } catch (error) {
+    console.error("SePay Check Error:", error);
+    res.status(200).json({
+      success: true,
+      isPaid: null,
+      message: "Lỗi khi kiểm tra thanh toán",
     });
   }
 };

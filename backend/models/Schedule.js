@@ -14,7 +14,7 @@ const scheduleSchema = new mongoose.Schema({
   time: { type: String, required: true },
   status: { type: String, enum: ['scheduled', 'completed'], default: 'scheduled' },
   seatStatuses: [seatStatusSchema],
-  basePrice: { type: Number, required: true, default: 75000 }
+  basePrice: { type: Number, required: true, default: 1000 }
 }, { timestamps: true });
 
 // Unique index: không thể có 2 lịch chiếu cho cùng phim, cùng phòng, cùng ngày, cùng giờ
