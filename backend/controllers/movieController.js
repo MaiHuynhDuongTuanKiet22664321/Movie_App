@@ -56,6 +56,8 @@ export const addMovie = async (req, res) => {
       tagline,
     } = req.body;
 
+
+
     // Check if movie already exists
     const existingMovie = await Movie.findOne({ tmdbId });
     if (existingMovie) {
@@ -81,7 +83,6 @@ export const addMovie = async (req, res) => {
     });
 
     await movie.save();
-
     res.status(201).json({
       success: true,
       message: 'Đã thêm phim vào hệ thống',

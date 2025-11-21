@@ -1,4 +1,3 @@
-/* eslint-disable import/no-named-as-default */
 import React, { useEffect, useState } from "react";
 import {
   Text,
@@ -7,10 +6,12 @@ import {
   StatusBar,
   ImageBackground,
   Image,
-  ScrollView,
   SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
 } from "react-native";
-import * as SecureStore from "expo-secure-store";
 
 import {
   BORDER_RADIUS,
@@ -19,7 +20,7 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
-import MovieDetailsHeader from "../components/MovieDetailsHeader";
+
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../context/UserContext";
@@ -27,134 +28,115 @@ import AdminScheduleManagementScreen from "./AdminScheduleManagementScreen";
 
 const TicketScreen = ({ navigation, route }: any) => {
   const { user } = useUser();
-  const [ticketData, setTicketData] = useState<any>(null);
+  const [allTickets, setAllTickets] = useState([]);
+  const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState<
+    "all" | "upcoming" | "watched"
+  >("all");
 
-  // Nếu user là admin, hiển thị màn hình quản lý
-  if (user?.role === "admin") {
-    return <AdminScheduleManagementScreen navigation={navigation} />;
-  }
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Load ticket data từ route params hoặc API
+  useEffect(() => {
+    if (user?.role === "admin") {
+      setIsAdmin(true);
+    }
+  }, [user?.role]);
+
+  const formatTicket = (ticket: any) => {
+    return {
+      _id: ticket._id,
+      PosterImage: ticket.scheduleId.movie.posterUrl,
+      movieTitle: ticket.scheduleId.movie.title,
+      date: {
+        date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
+        day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", {
+          weekday: "long",
+        }),
+      },
+      time: ticket.scheduleId.time,
+      room: ticket.scheduleId.room.name,
+      seatArray: ticket.bookedSeats,
+      totalPrice: ticket.totalPrice,
+      transactionId: ticket.transactionId,
+      scheduleDate: new Date(ticket.scheduleId.date),
+    };
+  };
+
+  const loadUserTickets = async () => {
+    try {
+      const { bookingApi } = await import("../api/bookingApi");
+      const result = await bookingApi.getUserTickets();
+
+      if (result.success && Array.isArray(result.data)) {
+        const formatted = result.data.map((ticket: any) =>
+          formatTicket(ticket)
+        );
+        setAllTickets(formatted);
+        applyFilter(formatted, "all");
+      }
+    } catch (error) {
+      console.error("Error loading user tickets:", error);
+    }
+  };
+
   useEffect(() => {
     const loadTicketData = async () => {
       try {
-        if (route.params?.ticketData) {
-          // Nếu có ticketData từ PaymentScreen
-          const ticket = route.params.ticketData;
-          const formattedData = {
-            _id: ticket._id,
-            PosterImage: ticket.scheduleId.movie.posterUrl,
-            movieTitle: ticket.scheduleId.movie.title,
-            date: {
-              date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
-              day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", { weekday: "long" }),
-            },
-            time: ticket.scheduleId.time,
-            room: ticket.scheduleId.room.name,
-            seatArray: ticket.bookedSeats,
-            totalPrice: ticket.totalPrice,
-            transactionId: ticket.transactionId,
-          };
-          setTicketData(formattedData);
-          await SecureStore.setItemAsync("lastTicket", JSON.stringify(formattedData));
-        } else if (route.params?.ticketId) {
-          // Nếu chỉ có ticketId, gọi API để lấy chi tiết
-          const { bookingApi } = await import("../api/bookingApi");
-          const result = await bookingApi.getTicketById(route.params.ticketId);
-          if (result.success) {
-            const ticket = result.data;
-            const formattedData = {
-              _id: ticket._id,
-              PosterImage: ticket.scheduleId.movie.posterUrl,
-              movieTitle: ticket.scheduleId.movie.title,
-              date: {
-                date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
-                day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", { weekday: "long" }),
-              },
-              time: ticket.scheduleId.time,
-              room: ticket.scheduleId.room.name,
-              seatArray: ticket.bookedSeats,
-              totalPrice: ticket.totalPrice,
-              transactionId: ticket.transactionId,
-            };
-            setTicketData(formattedData);
-            await SecureStore.setItemAsync("lastTicket", JSON.stringify(formattedData));
-          }
-        } else {
-          // Không có params, load từ storage
-          const lastTicket = await SecureStore.getItemAsync("lastTicket");
-          if (lastTicket) {
-            setTicketData(JSON.parse(lastTicket));
-          }
-        }
+        await loadUserTickets();
       } catch (error) {
-        console.error("Error loading ticket:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
-
     loadTicketData();
   }, [route.params]);
 
-  // 🔹 Nếu chưa có dữ liệu ticket - hiển thị no-ticket
-  if (loading || !ticketData) {
+  if (isAdmin) {
     return (
-      <SafeAreaView style={styles.safeAreaViewContainer}>
-        <View style={styles.container}>
-          <StatusBar hidden />
-          <View style={styles.noTicketContainer}>
-            <Image
-              source={require("../assets/image/no-ticket.png")}
-              style={styles.noTicketImage}
-            />
-            <Text style={styles.noTicketText}>
-              {loading ? "Đang tải..." : "Chưa có vé"}
-            </Text>
-            <Text style={styles.noTicketSubText}>
-              {loading ? "Vui lòng đợi..." : "Đặt vé xem phim yêu thích để xem vé tại đây"}
-            </Text>
-          </View>
-        </View>
-      </SafeAreaView>
+      <AdminScheduleManagementScreen
+        navigation={navigation}
+        route={route}
+      />
     );
   }
 
-  return (
-    <SafeAreaView style={styles.safeAreaViewContainer}>
-      <ScrollView style={styles.container}>
-        <StatusBar hidden />
+  const applyFilter = (tickets: any[], filter: "all" | "upcoming" | "watched") => {
+    const now = new Date();
+    let filtered = tickets;
 
-        <View style={styles.ticketContainer}>
-          <ImageBackground
-            source={{ uri: ticketData?.PosterImage }}
-            resizeMode="cover"
-            style={styles.ticketBGImage}
-          >
-            <LinearGradient
-              colors={[COLORS.OrangeRGBBA0, COLORS.Orange]}
-              style={styles.linearGradient}
-            >
-              <View
-                style={[
-                  styles.blackCircle,
-                  { position: "absolute", bottom: -40, left: -40 },
-                ]}
-              />
-              <View
-                style={[
-                  styles.blackCircle,
-                  { position: "absolute", bottom: -40, right: -40 },
-                ]}
-              />
-            </LinearGradient>
-          </ImageBackground>
+    if (filter === "upcoming") {
+      filtered = tickets.filter((t) => t.scheduleDate > now);
+    } else if (filter === "watched") {
+      filtered = tickets.filter((t) => t.scheduleDate <= now);
+    }
 
-          <View style={styles.linear}></View>
+    setFilteredTickets(
+      filtered.sort((a, b) => b.scheduleDate.getTime() - a.scheduleDate.getTime())
+    );
+  };
 
-          <View style={styles.ticketFooter}>
-            <View
+  const handleFilterChange = (filter: "all" | "upcoming" | "watched") => {
+    setSelectedFilter(filter);
+    applyFilter(allTickets, filter);
+  };
+
+  const renderTicketItem = ({ item }: { item: any }) => (
+    <View style={styles.ticketCard}>
+      <ImageBackground source={{ uri: item.PosterImage }} style={styles.ticketBGImage}>
+        <LinearGradient
+          colors={[COLORS.OrangeRGBBA0, COLORS.Orange]}
+          style={styles.linearGradient}
+        >
+          <View style={[styles.blackCircle, { position: "absolute", bottom: -40, left: -40 }]} />
+          <View style={[styles.blackCircle, { position: "absolute", bottom: -40, right: -40 }]} />
+        </LinearGradient>
+      </ImageBackground>
+      
+      <View style={styles.linear} />
+      <View style={styles.ticketFooter}>
+        <View
               style={[
                 styles.blackCircle,
                 { position: "absolute", top: -40, left: -40 },
@@ -166,43 +148,120 @@ const TicketScreen = ({ navigation, route }: any) => {
                 { position: "absolute", top: -40, right: -40 },
               ]}
             />
-
-            {/* Ngày chiếu */}
-            <View style={styles.ticketDateContainer}>
-              <View style={styles.subtitleContainer}>
-                <Text style={styles.dateTitle}>
-                  {ticketData?.date?.date || ""}
-                </Text>
-                <Text style={styles.subtitle}>
-                  {ticketData?.date?.day || ""}
-                </Text>
-              </View>
-              <View style={styles.subtitleContainer}>
-                <FontAwesome6
-                  name="clock"
-                  size={24}
-                  color="white"
-                />
-                <Text style={styles.subtitle}>{ticketData?.time || ""}</Text>
-              </View>
-            </View>
-
-            {/* Ghế */}
-            <View style={styles.ticketSeatContainer}>
-              <View style={styles.subtitleContainer}>
-                <Text style={styles.subheading}>Seats</Text>
-                <Text style={styles.subtitle}>
-                  {ticketData?.seatArray
-                    ?.slice(0, ticketData?.seatArray.length)
-                    .map(
-                      (item: any, index: number, arr: any) =>
-                        item + (index === arr.length - 1 ? "" : ", ")
-                    )}
-                </Text>
-              </View>
-            </View>
-            <Image source={require("../assets/image/barcode.png")} style={styles.barcodeImage}/>
+        <View style={styles.ticketDateContainer}>
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.dateTitle}>{item.date.date}</Text>
+            <Text style={styles.subtitle}>{item.date.day}</Text>
           </View>
+
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subheading}>{item.time}</Text>
+            <Text style={styles.subtitle}>{item.room}</Text>
+          </View>
+        </View>
+
+        <View style={styles.ticketSeatContainer}>
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subheading}>Seats</Text>
+            <Text style={styles.subtitle}>
+              {item.seatArray.join(", ")}
+            </Text>
+          </View>
+        </View>
+
+        <Image
+          source={require("../assets/image/barcode.png")}
+          style={styles.barcodeImage}
+        />
+      </View>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.Orange} />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeAreaViewContainer}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerTitle}>Vé của tôi</Text>
+          </View>
+
+          <View style={styles.filterWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.filterTab,
+                selectedFilter === "all" && styles.filterTabActive,
+              ]}
+              onPress={() => handleFilterChange("all")}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === "all" && styles.filterTextActive,
+                ]}
+              >
+                Tất cả
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterTab,
+                selectedFilter === "upcoming" && styles.filterTabActive,
+              ]}
+              onPress={() => handleFilterChange("upcoming")}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === "upcoming" && styles.filterTextActive,
+                ]}
+              >
+                Sắp tới
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterTab,
+                selectedFilter === "watched" && styles.filterTabActive,
+              ]}
+              onPress={() => handleFilterChange("watched")}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === "watched" && styles.filterTextActive,
+                ]}
+              >
+                Đã xem
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={filteredTickets}
+            renderItem={renderTicketItem}
+            keyExtractor={(item) => item._id}
+            horizontal   
+            nestedScrollEnabled={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.flatListContainer}
+            snapToInterval={320}
+            decelerationRate="fast"
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -219,16 +278,66 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.Black,
   },
-  appHeaderContainer: {
-    marginHorizontal: SPACING.space_36,
-    marginTop: SPACING.space_20 * 2,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.DarkGrey,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: SPACING.space_20,
+    marginTop: SPACING.space_16,
   },
-  ticketContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.Black,
+  },
+  headerContainer: {
+    paddingHorizontal: SPACING.space_20,
+    paddingVertical: SPACING.space_20,
+  },
+  headerTitle: {
+    fontFamily: FONT_FAMILY.poppins_bold,
+    fontSize: FONT_SIZE.size_28,
+    color: COLORS.White,
+  },
+  filterWrapper: {
+    flexDirection: "row",
+    paddingHorizontal: SPACING.space_12,
+    paddingVertical: SPACING.space_12,
+    gap: SPACING.space_8,
+  },
+  filterTab: {
+    flex: 1,
+    paddingHorizontal: SPACING.space_16,
+    paddingVertical: SPACING.space_12,
+    borderRadius: BORDER_RADIUS.radius_16,
+    backgroundColor: COLORS.DarkGrey,
+    alignItems: "center",
+  },
+  filterTabActive: {
+    backgroundColor: COLORS.Orange,
+  },
+  filterText: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.WhiteRGBA75,
+  },
+  filterTextActive: {
+    color: COLORS.White,
+    fontFamily: FONT_FAMILY.poppins_semibold,
+  },
+  flatListContainer: {
+    paddingHorizontal: SPACING.space_16,
+    paddingVertical: SPACING.space_20,
+  },
+  ticketCard: {
+    marginRight: SPACING.space_16,
+    alignItems: "center",
   },
   ticketBGImage: {
-    alignSelf: "center",
     width: 300,
     aspectRatio: 200 / 300,
     borderTopLeftRadius: BORDER_RADIUS.radius_24,
@@ -243,7 +352,6 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.Black,
     borderTopWidth: 2,
     width: 300,
-    alignSelf: "center",
     backgroundColor: COLORS.Orange,
     borderStyle: "dashed",
   },
@@ -252,7 +360,6 @@ const styles = StyleSheet.create({
     width: 300,
     alignItems: "center",
     paddingBottom: SPACING.space_36,
-    alignSelf: "center",
     borderBottomLeftRadius: BORDER_RADIUS.radius_24,
     borderBottomRightRadius: BORDER_RADIUS.radius_24,
   },

@@ -40,7 +40,6 @@ app.use('*', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',
@@ -52,8 +51,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;

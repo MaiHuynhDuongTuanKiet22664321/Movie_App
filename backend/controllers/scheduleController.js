@@ -28,7 +28,11 @@ export const createSchedule = async (req, res) => {
   try {
     const { movie, room, date, time, basePrice = 75000 } = req.body;
 
-    const existingSchedule = await Schedule.findOne({ movie, room, date: new Date(date), time });
+    // Chuyển date sang format YYYY-MM-DD
+    const dateObj = new Date(date);
+    const dateString = dateObj.toISOString().split('T')[0];
+
+    const existingSchedule = await Schedule.findOne({ movie, room, date: dateString, time });
     if (existingSchedule) return res.status(400).json({ success: false, message: "Lịch chiếu đã tồn tại" });
 
     const roomDoc = await Room.findById(room);
@@ -44,7 +48,7 @@ export const createSchedule = async (req, res) => {
     const schedule = new Schedule({
       movie,
       room,
-      date: new Date(date),
+      date: dateString,
       time,
       basePrice,
       seatStatuses

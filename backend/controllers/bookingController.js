@@ -20,6 +20,15 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    // Kiểm tra scheduleId hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'ID lịch chiếu không hợp lệ',
+      });
+    }
+
     // Kiểm tra schedule tồn tại
     const schedule = await Schedule.findById(scheduleId)
       .populate('movie')
@@ -100,11 +109,9 @@ export const createBooking = async (req, res) => {
 
   } catch (error) {
     await session.abortTransaction();
-    console.error('Error creating booking:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi đặt vé',
-      error: error.message,
     });
   } finally {
     session.endSession();
@@ -132,11 +139,9 @@ export const getUserTickets = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching user tickets:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy danh sách vé',
-      error: error.message,
     });
   }
 };
@@ -170,11 +175,9 @@ export const getTicketById = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching ticket:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy thông tin vé',
-      error: error.message,
     });
   }
 };

@@ -7,6 +7,7 @@ const movieSchema = new mongoose.Schema(
       type: Number,
       required: true,
       unique: true,
+      sparse: true,
     },
     title: {
       type: String,

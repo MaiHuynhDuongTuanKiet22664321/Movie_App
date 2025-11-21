@@ -11,6 +11,7 @@ import {
   Alert,
   Image,
   Modal,
+  FlatList,
 } from "react-native";
 import {
   BORDER_RADIUS,
@@ -230,12 +231,12 @@ const AdminMovieManagementScreen = () => {
             />
             <Text style={styles.emptyTitle}>Chưa có phim nào</Text>
             <Text style={styles.emptySubtitle}>
-              Nhấn "Thêm phim" để tìm kiếm và thêm phim vào hệ thống
+              {"Nhấn Thêm phim để tìm kiếm và thêm phim vào hệ thống"}
             </Text>
           </View>
         ) : (
           <View style={styles.moviesGrid}>
-            {movies.map(renderMovieCard)}
+            <FlatList data={movies} renderItem={({ item }) => renderMovieCard(item)} numColumns={2} columnWrapperStyle={styles.columnWrapper} />
           </View>
         )}
       </ScrollView>
@@ -629,6 +630,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.space_16,
     textAlign: "center",
   },
+  columnWrapper:{
+    gap: SPACING.space_12,
+    marginBottom: SPACING.space_12
+  }
 });
 
 export default AdminMovieManagementScreen;

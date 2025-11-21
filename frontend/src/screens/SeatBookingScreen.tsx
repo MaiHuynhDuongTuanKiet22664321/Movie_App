@@ -37,13 +37,32 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const fetchSeats = async () => {
     try {
       const { roomApi } = await import("../api/adminApi");
-      const roomResult = await roomApi.getById(schedule.room._id);
+      const { bookingApi } = await import("../api/bookingApi");
       
-      if (roomResult.success && roomResult.data.sodoghe) {
-        setSeats(roomResult.data.sodoghe);
-      } else {
-        setSeats([]);
-      }
+      // Fetch room seats
+      const roomResult = await roomApi.getById(schedule.room._id);
+      let roomSeats = roomResult.success && roomResult.data.sodoghe ? roomResult.data.sodoghe : [];
+      
+      // Fetch schedule details để lấy seatStatuses
+      const scheduleResult = await bookingApi.getSchedule(scheduleId);
+      const scheduleSeatStatuses = scheduleResult.success && scheduleResult.data.seatStatuses 
+        ? scheduleResult.data.seatStatuses 
+        : [];
+
+      // Merge: update room seats status từ schedule
+      const mergedSeats = roomSeats.map((roomSeat: any) => {
+        const scheduleSeat = scheduleSeatStatuses.find(
+          (s: any) => s.row === roomSeat.row && s.number === roomSeat.number
+        );
+        
+        // Nếu có trong schedule và booked, update status từ schedule
+        if (scheduleSeat && scheduleSeat.status === 'booked') {
+          return { ...roomSeat, status: 'booked' };
+        }
+        return roomSeat;
+      });
+
+      setSeats(mergedSeats);
     } catch (error) {
       console.error("Error fetching seats:", error);
       setSeats([]);
@@ -54,9 +73,10 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
 
   const getSeatId = (seat: any) => `${seat.row}${seat.number}`;
 
-  const getSeatStatus = (seatId: string): "selected" | "available" | "booked" => {
+  const getSeatStatus = (seat: any): "selected" | "available" | "booked" => {
+    const seatId = getSeatId(seat);
     if (selectedSeats.includes(seatId)) return "selected";
-    // TODO: Check booked seats from schedule
+    if (seat.status === "booked") return "booked";
     return "available";
   };
 
@@ -91,7 +111,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
 
   const renderSeat = (seat: any) => {
     const seatId = getSeatId(seat);
-    const status = getSeatStatus(seatId);
+    const status = getSeatStatus(seat);
     const isVIP = isVIPSeat(seat);
     const isInteractive = status !== "booked";
 

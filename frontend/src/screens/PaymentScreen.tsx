@@ -50,6 +50,17 @@ const PaymentScreen = ({ navigation, route }: any) => {
     setProcessing(true);
 
     try {
+      // Validation dữ liệu trước khi gửi
+      if (!scheduleId) {
+        throw new Error('Không tìm thấy thông tin lịch chiếu');
+      }
+      if (!selectedSeats || selectedSeats.length === 0) {
+        throw new Error('Vui lòng chọn ít nhất một ghế');
+      }
+      if (!totalPrice || totalPrice <= 0) {
+        throw new Error('Tổng giá tiền không hợp lệ');
+      }
+
       const { bookingApi } = await import("../api/bookingApi");
       
       const result = await bookingApi.createBooking({
@@ -77,7 +88,6 @@ const PaymentScreen = ({ navigation, route }: any) => {
         throw new Error(result.message || "Đặt vé thất bại");
       }
     } catch (error: any) {
-      console.error("Booking error:", error);
       setDialogConfig({
         type: "error",
         title: "Lỗi",

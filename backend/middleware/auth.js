@@ -45,7 +45,6 @@ export const protect = async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error('Auth Middleware Error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi xác thực.',
