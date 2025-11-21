@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  RefreshControl,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -30,13 +32,22 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [dates, setDates] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchSchedules();
   }, []);
 
+  // Refresh khi focus vào screen
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchSchedules();
+    }, [])
+  );
+
   const fetchSchedules = async () => {
     try {
+      setRefreshing(true);
       const result = await scheduleApi.getAll();
       if (result.success) {
         // Lọc lịch chiếu của phim này
@@ -147,7 +158,17 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={fetchSchedules}
+            tintColor={COLORS.Orange}
+          />
+        }
+      >
         {/* Date Selection */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

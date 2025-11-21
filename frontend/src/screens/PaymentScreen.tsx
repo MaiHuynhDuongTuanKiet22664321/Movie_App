@@ -79,10 +79,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
         setDialogVisible(true);
 
         setTimeout(() => {
-          navigation.navigate("Ticket", {
-            ticketId: result.data._id,
-            ticketData: result.data,
-          });
+          navigation.goBack();
         }, 2000);
       } else {
         throw new Error(result.message || "Đặt vé thất bại");
@@ -222,10 +219,11 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
             <TouchableOpacity
               style={[
-                styles.paymentOption,
+                styles.paymentOption,              
                 paymentMethod === "momo" && styles.paymentOptionActive,
               ]}
               onPress={() => setPaymentMethod("momo")}
+              disabled={true}
             >
               <MaterialCommunityIcons
                 name="wallet"
@@ -238,7 +236,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   paymentMethod === "momo" && styles.paymentTextActive,
                 ]}
               >
-                MoMo
+                MoMo (Đang phát triển)
               </Text>
               {paymentMethod === "momo" && (
                 <FontAwesome6 name="circle-check" size={20} color={COLORS.Orange} />
@@ -251,6 +249,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                 paymentMethod === "bank" && styles.paymentOptionActive,
               ]}
               onPress={() => setPaymentMethod("bank")}
+              disabled={true}
             >
               <MaterialCommunityIcons
                 name="bank"
@@ -263,7 +262,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   paymentMethod === "bank" && styles.paymentTextActive,
                 ]}
               >
-                Chuyển khoản
+                Chuyển khoản (Đang phát triển)
               </Text>
               {paymentMethod === "bank" && (
                 <FontAwesome6 name="circle-check" size={20} color={COLORS.Orange} />

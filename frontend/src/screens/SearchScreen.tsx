@@ -7,6 +7,7 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { COLORS, SPACING, FONT_FAMILY, FONT_SIZE, BORDER_RADIUS } from "../theme/theme";
 import { baseImagePath, searchMovies } from "../api/apicall";
@@ -22,6 +23,7 @@ const SearchScreen = ({ navigation, route }: any) => {
   const [initialQuery, setInitialQuery] = useState<string>(
     route.params?.query || ""
   );
+  const [refreshing, setRefreshing] = useState(false);
 
   const searchMoviesFuntion = async (name: string) => {
     try {

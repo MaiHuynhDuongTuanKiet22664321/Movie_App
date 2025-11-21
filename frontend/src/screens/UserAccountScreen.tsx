@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as React from "react";
 import {
   Image,
@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import AppHeader from "../components/MovieDetailsHeader";
@@ -20,6 +21,13 @@ import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
 const UserAccountScreen = ({ navigation }: any) => {
   const { user, logout } = useUser();
   const nav = useNavigation<any>();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Refresh user profile data if needed
+    setRefreshing(false);
+  };
 
   const handleLogout = () => {
     logout();
@@ -42,6 +50,13 @@ const UserAccountScreen = ({ navigation }: any) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#FF8C42"
+          />
+        }
       >
         <View style={styles.profileContainer}>
           <Image

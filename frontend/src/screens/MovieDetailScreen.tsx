@@ -10,7 +10,9 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { baseImagePath, movieCastDetails, movieDetails, movieImages } from "../api/apicall";
 import {
   BORDER_RADIUS,

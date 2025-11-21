@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from "react";
+// TicketScreen.tsx (Bộ lọc nâng cao cho Sắp tới + QR đẹp)
+
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Text,
   View,
   StyleSheet,
   StatusBar,
   ImageBackground,
-  Image,
   SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
   ScrollView,
+  RefreshControl,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 
 import {
   BORDER_RADIUS,
@@ -25,6 +28,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../context/UserContext";
 import AdminScheduleManagementScreen from "./AdminScheduleManagementScreen";
+import QRCode from "react-native-qrcode-svg";
 
 const TicketScreen = ({ navigation, route }: any) => {
   const { user } = useUser();
@@ -32,51 +36,51 @@ const TicketScreen = ({ navigation, route }: any) => {
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<
-    "all" | "upcoming" | "watched"
-  >("all");
+    "today" | "upcoming" | "expired"
+  >("today");
+
+  const [upcomingDays, setUpcomingDays] = useState<string[]>([]);
+  const [selectedUpcomingDay, setSelectedUpcomingDay] = useState<string | null>(
+    null
+  );
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (user?.role === "admin") {
-      setIsAdmin(true);
-    }
-  }, [user?.role]);
-
-  const formatTicket = (ticket: any) => {
-    return {
-      _id: ticket._id,
-      PosterImage: ticket.scheduleId.movie.posterUrl,
-      movieTitle: ticket.scheduleId.movie.title,
-      date: {
-        date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
-        day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", {
-          weekday: "long",
-        }),
-      },
-      time: ticket.scheduleId.time,
-      room: ticket.scheduleId.room.name,
-      seatArray: ticket.bookedSeats,
-      totalPrice: ticket.totalPrice,
-      transactionId: ticket.transactionId,
-      scheduleDate: new Date(ticket.scheduleId.date),
-    };
-  };
+  const formatTicket = (ticket: any) => ({
+    _id: ticket._id,
+    PosterImage: ticket.scheduleId.movie.posterUrl,
+    movieTitle: ticket.scheduleId.movie.title,
+    date: {
+      date: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN"),
+      day: new Date(ticket.scheduleId.date).toLocaleDateString("vi-VN", {
+        weekday: "long",
+      }),
+    },
+    time: ticket.scheduleId.time,
+    room: ticket.scheduleId.room.name,
+    seatArray: ticket.bookedSeats,
+    totalPrice: ticket.totalPrice,
+    transactionId: ticket.transactionId,
+    scheduleDate: new Date(ticket.scheduleId.date),
+  });
 
   const loadUserTickets = async () => {
     try {
+      setRefreshing(true);
       const { bookingApi } = await import("../api/bookingApi");
       const result = await bookingApi.getUserTickets();
-
       if (result.success && Array.isArray(result.data)) {
         const formatted = result.data.map((ticket: any) =>
           formatTicket(ticket)
         );
         setAllTickets(formatted);
-        applyFilter(formatted, "all");
+        applyFilter(formatted, "today");
       }
     } catch (error) {
       console.error("Error loading user tickets:", error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -93,61 +97,106 @@ const TicketScreen = ({ navigation, route }: any) => {
     loadTicketData();
   }, [route.params]);
 
-  if (isAdmin) {
-    return (
-      <AdminScheduleManagementScreen
-        navigation={navigation}
-        route={route}
-      />
-    );
-  }
+  // Refresh khi quay lại screen
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserTickets();
+    }, [])
+  );
 
-  const applyFilter = (tickets: any[], filter: "all" | "upcoming" | "watched") => {
+  if (isAdmin)
+    return (
+      <AdminScheduleManagementScreen navigation={navigation} route={route} />
+    );
+
+  const applyFilter = (
+    tickets: any[],
+    filter: "today" | "upcoming" | "expired"
+  ) => {
     const now = new Date();
     let filtered = tickets;
-
-    if (filter === "upcoming") {
+    if (filter === "today") {
+      filtered = tickets.filter((t) => {
+        const d = t.scheduleDate;
+        return (
+          d.getDate() === now.getDate() &&
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      });
+    } else if (filter === "upcoming") {
       filtered = tickets.filter((t) => t.scheduleDate > now);
-    } else if (filter === "watched") {
-      filtered = tickets.filter((t) => t.scheduleDate <= now);
+      const days = Array.from(new Set(filtered.map((t) => t.date.date)));
+      setUpcomingDays(days);
+      setSelectedUpcomingDay(null);
+    } else if (filter === "expired") {
+      filtered = tickets.filter((t) => t.scheduleDate < now);
     }
-
     setFilteredTickets(
-      filtered.sort((a, b) => b.scheduleDate.getTime() - a.scheduleDate.getTime())
+      filtered.sort(
+        (a, b) => b.scheduleDate.getTime() - a.scheduleDate.getTime()
+      )
     );
   };
 
-  const handleFilterChange = (filter: "all" | "upcoming" | "watched") => {
+  useEffect(() => {
+    if (selectedFilter === "upcoming" && selectedUpcomingDay) {
+      const filtered = allTickets.filter(
+        (t) =>
+          t.scheduleDate > new Date() && t.date.date === selectedUpcomingDay
+      );
+      setFilteredTickets(filtered);
+    } else {
+      applyFilter(allTickets, selectedFilter);
+    }
+  }, [selectedUpcomingDay]);
+
+  const handleFilterChange = (filter: "today" | "upcoming" | "expired") => {
     setSelectedFilter(filter);
+    setSelectedUpcomingDay(null);
     applyFilter(allTickets, filter);
   };
 
   const renderTicketItem = ({ item }: { item: any }) => (
     <View style={styles.ticketCard}>
-      <ImageBackground source={{ uri: item.PosterImage }} style={styles.ticketBGImage}>
+      <ImageBackground
+        source={{ uri: item.PosterImage }}
+        style={styles.ticketBGImage}
+      >
         <LinearGradient
           colors={[COLORS.OrangeRGBBA0, COLORS.Orange]}
           style={styles.linearGradient}
         >
-          <View style={[styles.blackCircle, { position: "absolute", bottom: -40, left: -40 }]} />
-          <View style={[styles.blackCircle, { position: "absolute", bottom: -40, right: -40 }]} />
+          <View
+            style={[
+              styles.blackCircle,
+              { position: "absolute", bottom: -40, left: -40 },
+            ]}
+          />
+          <View
+            style={[
+              styles.blackCircle,
+              { position: "absolute", bottom: -40, right: -40 },
+            ]}
+          />
         </LinearGradient>
       </ImageBackground>
-      
+
       <View style={styles.linear} />
       <View style={styles.ticketFooter}>
         <View
-              style={[
-                styles.blackCircle,
-                { position: "absolute", top: -40, left: -40 },
-              ]}
-            />
-            <View
-              style={[
-                styles.blackCircle,
-                { position: "absolute", top: -40, right: -40 },
-              ]}
-            />
+          style={[
+            styles.blackCircle,
+            { position: "absolute", top: -40, left: -40 },
+          ]}
+        />
+        <View
+          style={[
+            styles.blackCircle,
+            { position: "absolute", top: -40, right: -40 },
+          ]}
+        />
+
         <View style={styles.ticketDateContainer}>
           <View style={styles.subtitleContainer}>
             <Text style={styles.dateTitle}>{item.date.date}</Text>
@@ -163,35 +212,64 @@ const TicketScreen = ({ navigation, route }: any) => {
         <View style={styles.ticketSeatContainer}>
           <View style={styles.subtitleContainer}>
             <Text style={styles.subheading}>Seats</Text>
-            <Text style={styles.subtitle}>
-              {item.seatArray.join(", ")}
-            </Text>
+            <Text style={styles.subtitle}>{item.seatArray.join(", ")}</Text>
           </View>
         </View>
 
-        <Image
-          source={require("../assets/image/barcode.png")}
-          style={styles.barcodeImage}
-        />
+        <View style={styles.qrWrapper}>
+          <LinearGradient
+            colors={["#ffffff", "#f5f2e8"]}
+            style={styles.qrBackground}
+          >
+            <QRCode
+              value={JSON.stringify({
+                id: item._id,
+                transactionId: item.transactionId,
+                seats: item.seatArray,
+                date: item.date.date,
+                movie: item.movieTitle,
+                time: item.time,
+                room: item.room,
+                name: user?.fullName || "Guest",
+                email: user?.email || "Guest",
+                phoneNumber: user?.phoneNumber || "Guest",
+              })}
+              size={130}
+              backgroundColor="transparent"
+              color="black"
+              logo={require("../assets/image/logo.jpg")}
+              logoSize={32}
+              logoBackgroundColor="transparent"
+            />
+          </LinearGradient>
+        </View>
       </View>
     </View>
   );
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.Orange} />
       </View>
     );
-  }
 
   return (
     <SafeAreaView style={styles.safeAreaViewContainer}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
-
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await loadUserTickets();
+            }}
+            tintColor={COLORS.Orange}
+          />
+        }
       >
         <View style={styles.container}>
           <View style={styles.headerContainer}>
@@ -202,17 +280,17 @@ const TicketScreen = ({ navigation, route }: any) => {
             <TouchableOpacity
               style={[
                 styles.filterTab,
-                selectedFilter === "all" && styles.filterTabActive,
+                selectedFilter === "today" && styles.filterTabActive,
               ]}
-              onPress={() => handleFilterChange("all")}
+              onPress={() => handleFilterChange("today")}
             >
               <Text
                 style={[
                   styles.filterText,
-                  selectedFilter === "all" && styles.filterTextActive,
+                  selectedFilter === "today" && styles.filterTextActive,
                 ]}
               >
-                Tất cả
+                Hôm nay
               </Text>
             </TouchableOpacity>
 
@@ -236,26 +314,54 @@ const TicketScreen = ({ navigation, route }: any) => {
             <TouchableOpacity
               style={[
                 styles.filterTab,
-                selectedFilter === "watched" && styles.filterTabActive,
+                selectedFilter === "expired" && styles.filterTabActive,
               ]}
-              onPress={() => handleFilterChange("watched")}
+              onPress={() => handleFilterChange("expired")}
             >
               <Text
                 style={[
                   styles.filterText,
-                  selectedFilter === "watched" && styles.filterTextActive,
+                  selectedFilter === "expired" && styles.filterTextActive,
                 ]}
               >
-                Đã xem
+                Hết hạn
               </Text>
             </TouchableOpacity>
           </View>
+
+          {selectedFilter === "upcoming" && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 8, gap: 8 }}
+            >
+              {upcomingDays.map((day) => (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.filterDayTab,
+                    selectedUpcomingDay === day && styles.filterTabActive,
+                  ]}
+                  onPress={() => setSelectedUpcomingDay(day)}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      selectedUpcomingDay === day && styles.filterTextActive,
+                    ]}
+                  >
+                    {day}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
           <FlatList
             data={filteredTickets}
             renderItem={renderTicketItem}
             keyExtractor={(item) => item._id}
-            horizontal   
+            horizontal
             nestedScrollEnabled={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.flatListContainer}
@@ -269,25 +375,8 @@ const TicketScreen = ({ navigation, route }: any) => {
 };
 
 const styles = StyleSheet.create({
-  safeAreaViewContainer: {
-    flex: 1,
-    backgroundColor: COLORS.Black,
-  },
-  container: {
-    display: "flex",
-    flex: 1,
-    backgroundColor: COLORS.Black,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.DarkGrey,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: SPACING.space_20,
-    marginTop: SPACING.space_16,
-  },
+  safeAreaViewContainer: { flex: 1, backgroundColor: COLORS.Black },
+  container: { flex: 1, backgroundColor: COLORS.Black },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -317,9 +406,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.DarkGrey,
     alignItems: "center",
   },
-  filterTabActive: {
-    backgroundColor: COLORS.Orange,
-  },
+  filterTabActive: { backgroundColor: COLORS.Orange },
   filterText: {
     fontFamily: FONT_FAMILY.poppins_medium,
     fontSize: FONT_SIZE.size_12,
@@ -329,14 +416,18 @@ const styles = StyleSheet.create({
     color: COLORS.White,
     fontFamily: FONT_FAMILY.poppins_semibold,
   },
+  filterDayTab: {
+    paddingHorizontal: SPACING.space_12,
+    paddingVertical: SPACING.space_8,
+    borderRadius: BORDER_RADIUS.radius_16,
+    backgroundColor: COLORS.DarkGrey,
+    alignItems: "center",
+  },
   flatListContainer: {
     paddingHorizontal: SPACING.space_16,
     paddingVertical: SPACING.space_20,
   },
-  ticketCard: {
-    marginRight: SPACING.space_16,
-    alignItems: "center",
-  },
+  ticketCard: { marginRight: SPACING.space_16, alignItems: "center" },
   ticketBGImage: {
     width: 300,
     aspectRatio: 200 / 300,
@@ -345,9 +436,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
   },
-  linearGradient: {
-    height: "100%",
-  },
+  linearGradient: { height: "100%" },
   linear: {
     borderTopColor: COLORS.Black,
     borderTopWidth: 2,
@@ -392,41 +481,19 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_18,
     color: COLORS.White,
   },
-  subtitleContainer: {
-    alignItems: "center",
-  },
-  barcodeImage: {
-    height: 50,
-    aspectRatio: 158 / 52,
-  },
+  subtitleContainer: { alignItems: "center" },
   blackCircle: {
     height: 80,
     width: 80,
     borderRadius: 80,
     backgroundColor: COLORS.Black,
   },
-  noTicketContainer: {
-    flex: 1,
-    justifyContent: "center",
+  qrWrapper: { marginTop: 15, padding: 10 },
+  qrBackground: {
+    padding: 12,
+    borderRadius: 16,
     alignItems: "center",
-    paddingHorizontal: SPACING.space_48,
-  },
-  noTicketImage: {
-    width: 250,
-    height: 250,
-    marginBottom: SPACING.space_16,
-  },
-  noTicketText: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_24,
-    color: COLORS.White,
-    marginBottom: SPACING.space_8,
-  },
-  noTicketSubText: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA50,
-    textAlign: "center",
+    justifyContent: "center",
   },
 });
 

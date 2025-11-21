@@ -62,6 +62,7 @@ const AppNavigator = () => {
         component={EditProfileScreen}
         options={{ animation: "slide_from_right" }}
       />
+
     </Stack.Navigator>
   );
 };
