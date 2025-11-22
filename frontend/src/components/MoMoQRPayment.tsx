@@ -20,7 +20,11 @@ const MoMoQRPayment = ({
 
 
   useEffect(() => {
-    console.log("Data",date)
+    if (date) {
+      console.log("Date provided:", date);
+    } else {
+      console.warn("Warning: Date not provided to MoMoQRPayment");
+    }
     // Simulate QR code generation
     const timer = setTimeout(() => {
       setQrCodeGenerated(true);

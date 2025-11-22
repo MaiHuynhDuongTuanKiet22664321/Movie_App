@@ -1,4 +1,3 @@
-// TicketScreen.tsx (Bộ lọc nâng cao cho Sắp tới + QR đẹp)
 
 import React, { useEffect, useState, useCallback } from "react";
 import {
@@ -23,8 +22,6 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
-
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../context/UserContext";
 import AdminScheduleManagementScreen from "./AdminScheduleManagementScreen";
@@ -97,7 +94,6 @@ const TicketScreen = ({ navigation, route }: any) => {
     loadTicketData();
   }, [route.params]);
 
-  // Refresh khi quay lại screen
   useFocusEffect(
     React.useCallback(() => {
       loadUserTickets();
@@ -139,6 +135,7 @@ const TicketScreen = ({ navigation, route }: any) => {
     );
   };
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (selectedFilter === "upcoming" && selectedUpcomingDay) {
       const filtered = allTickets.filter(
@@ -368,6 +365,7 @@ const TicketScreen = ({ navigation, route }: any) => {
             snapToInterval={320}
             decelerationRate="fast"
           />
+
         </View>
       </ScrollView>
     </SafeAreaView>

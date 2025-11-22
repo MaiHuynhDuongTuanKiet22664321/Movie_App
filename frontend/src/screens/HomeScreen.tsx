@@ -22,6 +22,7 @@ import SubMoviesCard from "../components/SubMoviesCard";
 import MoviesCard from "../components/MoviesCard";
 import { fetchAllMovies } from "../service/movie.service";
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 
 const { width } = Dimensions.get("window");
 
@@ -60,7 +61,7 @@ const getUpComingMoviesList = async () => {
 };
 
 // Fetch từ backend
-const getMoviesShechedule = async () => {
+const getMoviesSchedule = async () => {
   try {
     console.log("Fetching movies from backend...");
     let res = await fetchAllMovies();
@@ -135,7 +136,7 @@ const HomeScreen = ({ navigation }: any) => {
     useCallback(() => {
       let isActive = true;
       const fetchSchedule = async () => {
-        const schedule = await getMoviesShechedule();
+        const schedule = await getMoviesSchedule();
         if (isActive) setMoviesShechedule(schedule);
       };
 

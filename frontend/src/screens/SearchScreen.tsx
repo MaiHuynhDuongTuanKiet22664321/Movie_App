@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import InputHeader from "../components/InputHeader";
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import React from "react";
 
 const { width } = Dimensions.get("screen");
 
@@ -43,7 +44,7 @@ const SearchScreen = ({ navigation, route }: any) => {
       );
       setSearchList(moviesWithDetails.filter((m) => m !== null));
     } catch (error) {
-      console.error("Somthing went wrong in SearchMovies ", error);
+      console.error("Something went wrong in SearchMovies ", error);
     }
   };
 

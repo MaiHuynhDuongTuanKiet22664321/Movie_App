@@ -91,6 +91,14 @@ export const bookSeats = async (req, res) => {
     const { seats } = req.body;
     const userId = req.userId;
 
+    // Validate input
+    if (!seats || !Array.isArray(seats) || seats.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng chọn ít nhất một ghế"
+      });
+    }
+
     const schedule = await Schedule.findById(req.params.id);
     if (!schedule) return res.status(404).json({ success: false, message: "Không tìm thấy lịch chiếu" });
 

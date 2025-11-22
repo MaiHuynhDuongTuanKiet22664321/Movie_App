@@ -21,9 +21,8 @@ import {
 } from "../theme/theme";
 import InfoDialog from "../components/InfoDialog";
 
-// --- CẤU HÌNH SEPAY (BẠN CẦN ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY) ---
 const SEPAY_CONFIG = {
-  API_TOKEN: "FASDHEFS4W2JIYCB3GIHCYLZS7WXKUELWWOD625QDVKRZ3NVPTMTHFBKH5BDLGOU", 
+
   BANK_ACCOUNT: "0395324779", 
   BANK_ID: "MBBank", 
 };
@@ -79,6 +78,12 @@ const PaymentScreen = ({ navigation, route }: any) => {
       
       if (!token) {
         console.error("No auth token found");
+        setDialogConfig({
+          type: "error",
+          title: "Lỗi xác thực",
+          message: "Vui lòng đăng nhập lại",
+        });
+        setDialogVisible(true);
         return null;
       }
       

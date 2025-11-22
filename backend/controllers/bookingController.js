@@ -175,7 +175,15 @@ export const checkPayment = async (req, res) => {
   try {
     const { orderCode, totalPrice } = req.body;
 
-    const SEPAY_API_TOKEN = process.env.SEPAY_API_TOKEN || "FASDHEFS4W2JIYCB3GIHCYLZS7WXKUELWWOD625QDVKRZ3NVPTMTHFBKH5BDLGOU";
+    const SEPAY_API_TOKEN = process.env.SEPAY_API_TOKEN;
+    
+    if (!SEPAY_API_TOKEN) {
+      console.error('SEPAY_API_TOKEN not configured in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Payment service not configured',
+      });
+    }
 
     const response = await fetch("https://my.sepay.vn/userapi/transactions/list", {
       method: "GET",
