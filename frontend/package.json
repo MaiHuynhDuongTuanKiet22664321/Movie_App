@@ -37,7 +37,6 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
-    "react-native-barcode-builder": "^2.0.0",
     "react-native-calendars": "^1.1313.0",
     "react-native-encrypted-storage": "^4.0.3",
     "react-native-gesture-handler": "~2.24.0",
