@@ -18,6 +18,7 @@ import {
 import Toast from 'react-native-toast-message';
 import { loginUser, registerUser } from '../service/auth.service';
 import { useUser } from '../context/UserContext';
+import { saveToken, saveUserData } from '../utils/storage';
 
 const AuthScreen = () => {
   const navigation = useNavigation<any>();
@@ -129,9 +130,9 @@ const AuthScreen = () => {
           // Lưu user data và token vào context
           setUser(user, token);
   
-          // Lưu vào localStorage
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
+          // Lưu vào SecureStore (hoạt động trên cả web và mobile)
+          await saveToken(token);
+          await saveUserData(user);
   
           Toast.show({
             type: 'success',
@@ -155,9 +156,9 @@ const AuthScreen = () => {
           // Lưu user data và token vào context
           setUser(user, token);
   
-          //Lưu vào localStorage
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
+          // Lưu vào SecureStore (hoạt động trên cả web và mobile)
+          await saveToken(token);
+          await saveUserData(user);
   
           Toast.show({
             type: 'success',
