@@ -1,9 +1,15 @@
-import { Ionicons } from "@expo/vector-icons";
-import Fontisto from "@expo/vector-icons/Fontisto";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { 
+  CalendarClock, 
+  DoorOpen, 
+  Film, 
+  Search, 
+  Ticket, 
+  UserCircle,
+  Clapperboard 
+} from "lucide-react-native";
 import HomeScreen from "../screens/HomeScreen";
 import SearchScreen from "../screens/SearchScreen";
 import TicketScreen from "../screens/TicketScreen";
@@ -50,11 +56,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name="calendar-clock"
-                    size={24}
-                    color="white"
-                  />
+                  <CalendarClock size={24} color="white" />
                 </View>
               ),
             }}
@@ -71,11 +73,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name="door"
-                    size={24}
-                    color="white"
-                  />
+                  <DoorOpen size={24} color="white" />
                 </View>
               ),
             }}
@@ -92,11 +90,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name="movie-open"
-                    size={24}
-                    color="white"
-                  />
+                  <Clapperboard size={24} color="white" />
                 </View>
               ),
             }}
@@ -113,11 +107,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <Ionicons
-                    name="person-circle"
-                    color={COLORS.White}
-                    size={FONT_SIZE.size_28}
-                  />
+                  <UserCircle size={28} color={COLORS.White} />
                 </View>
               ),
             }}
@@ -138,11 +128,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name="movie-open-play"
-                    size={24}
-                    color="white"
-                  />
+                  <Film size={24} color="white" />
                 </View>
               ),
             }}
@@ -159,11 +145,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <Ionicons
-                    name="search"
-                    color={COLORS.White}
-                    size={FONT_SIZE.size_28}
-                  />
+                  <Search size={28} color={COLORS.White} />
                 </View>
               ),
             }}
@@ -180,7 +162,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <Fontisto name="ticket" size={28} color="white" />
+                  <Ticket size={28} color="white" />
                 </View>
               ),
             }}
@@ -197,11 +179,7 @@ const TabNavigator = () => {
                     focused ? { backgroundColor: COLORS.Orange } : {},
                   ]}
                 >
-                  <Ionicons
-                    name="person-circle"
-                    color={COLORS.White}
-                    size={FONT_SIZE.size_28}
-                  />
+                  <UserCircle size={28} color={COLORS.White} />
                 </View>
               ),
             }}

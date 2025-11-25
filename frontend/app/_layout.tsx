@@ -8,23 +8,7 @@ import PaymentScreen from '../src/screens/PaymentScreen';
 import SeatBookingScreen from '../src/screens/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { 
-  Ionicons, 
-  MaterialIcons, 
-  FontAwesome, 
-  FontAwesome5, 
-  FontAwesome6,
-  MaterialCommunityIcons,
-  Fontisto,
-  Octicons 
-} from '@expo/vector-icons';
-
 import Toast from 'react-native-toast-message';
-
-// Prevent splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 
@@ -83,27 +67,6 @@ const AppNavigator = () => {
 };
 
 const Tablayout = () => {
-  const [fontsLoaded] = useFonts({
-    ...Ionicons.font,
-    ...MaterialIcons.font,
-    ...FontAwesome.font,
-    ...FontAwesome5.font,
-    ...FontAwesome6.font,
-    ...MaterialCommunityIcons.font,
-    ...Fontisto.font,
-    ...Octicons.font,
-  });
-
-  React.useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
   return (
     <UserProvider>
       <AppNavigator />
