@@ -1,6 +1,6 @@
 import { getToken } from "../utils/storage";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://movie-ticket-xncx.onrender.com/api";
 
 // Helper function to get headers with auth token
 const getHeaders = async () => {

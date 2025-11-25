@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
-import authRoutes from './routes/authRoutes.js';
-import movieRoutes from './routes/movieRoutes.js';
-import roomRoutes from './routes/roomRoutes.js';
-import scheduleRoutes from './routes/scheduleRoutes.js';
-import bookingRoutes from './routes/bookingRoutes.js';
+import connectDB from '../config/db.js';
+import authRoutes from './authRoutes.js';
+import movieRoutes from './movieRoutes.js';
+import roomRoutes from './roomRoutes.js';
+import scheduleRoutes from './scheduleRoutes.js';
+import bookingRoutes from './bookingRoutes.js';
 
 dotenv.config();
 

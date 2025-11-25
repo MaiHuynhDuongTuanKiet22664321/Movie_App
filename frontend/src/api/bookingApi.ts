@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getToken } from '../utils/storage';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://movie-ticket-xncx.onrender.com/api';
 
 const getAuthHeader = async () => {
   try {
