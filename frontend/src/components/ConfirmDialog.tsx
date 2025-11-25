@@ -14,7 +14,7 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { Trash2, AlertTriangle, Info } from "lucide-react-native";
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -39,26 +39,37 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   loading = false,
   type = "danger",
 }) => {
-  const getIcon = () => {
+  const getIconColor = () => {
     switch (type) {
       case "danger":
-        return { name: "trash-can", color: COLORS.Red };
+        return COLORS.Red;
       case "warning":
-        return { name: "triangle-exclamation", color: COLORS.Yellow };
+        return COLORS.Yellow;
       default:
-        return { name: "circle-info", color: COLORS.Orange };
+        return COLORS.Orange;
     }
   };
 
-  const icon = getIcon();
+  const iconColor = getIconColor();
+
+  const renderIcon = () => {
+    switch (type) {
+      case "danger":
+        return <Trash2 size={32} color={iconColor} />;
+      case "warning":
+        return <AlertTriangle size={32} color={iconColor} />;
+      default:
+        return <Info size={32} color={iconColor} />;
+    }
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           {/* Icon */}
-          <View style={[styles.iconContainer, { backgroundColor: icon.color + "20" }]}>
-            <FontAwesome6 name={icon.name} size={32} color={icon.color} />
+          <View style={[styles.iconContainer, { backgroundColor: iconColor + "20" }]}>
+            {renderIcon()}
           </View>
 
           {/* Title */}
@@ -81,7 +92,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               style={[
                 styles.button,
                 styles.confirmButton,
-                { backgroundColor: icon.color },
+                { backgroundColor: iconColor },
                 loading && styles.buttonDisabled,
               ]}
               onPress={onConfirm}

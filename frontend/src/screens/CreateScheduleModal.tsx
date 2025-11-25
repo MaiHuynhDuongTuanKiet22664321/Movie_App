@@ -9,7 +9,12 @@ import {
   ScrollView,
   ActivityIndicator,
   FlatList,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 import {
   BORDER_RADIUS,
   COLORS,
@@ -18,8 +23,7 @@ import {
   SPACING,
 } from "../theme/theme";
 import { scheduleApi, roomApi, movieApi } from "../api/adminApi";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { X, Film, ChevronDown, DoorOpen, Calendar as CalendarIcon, Clock, Check, CheckCircle, XCircle } from "lucide-react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import InfoDialog from "../components/InfoDialog";
 
@@ -252,7 +256,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Tạo lịch chiếu mới</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+              <X size={24} color={COLORS.White} />
             </TouchableOpacity>
           </View>
 
@@ -269,11 +273,11 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                   style={styles.selectButton}
                   onPress={() => setShowMoviePicker(true)}
                 >
-                  <MaterialCommunityIcons name="movie-open" size={20} color={COLORS.WhiteRGBA75} />
+                  <Film size={20} color={COLORS.WhiteRGBA75} />
                   <Text style={styles.selectButtonText}>
                     {movies.find((m) => m._id === selectedMovie)?.title || "Chọn phim..."}
                   </Text>
-                  <FontAwesome6 name="chevron-down" size={14} color={COLORS.WhiteRGBA50} />
+                  <ChevronDown size={14} color={COLORS.WhiteRGBA50} />
                 </TouchableOpacity>
               </View>
 
@@ -284,11 +288,11 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                   style={styles.selectButton}
                   onPress={() => setShowRoomPicker(true)}
                 >
-                  <MaterialCommunityIcons name="door" size={20} color={COLORS.WhiteRGBA75} />
+                  <DoorOpen size={20} color={COLORS.WhiteRGBA75} />
                   <Text style={styles.selectButtonText}>
                     {rooms.find((r) => r._id === selectedRoom)?.name || "Chọn phòng..."}
                   </Text>
-                  <FontAwesome6 name="chevron-down" size={14} color={COLORS.WhiteRGBA50} />
+                  <ChevronDown size={14} color={COLORS.WhiteRGBA50} />
                 </TouchableOpacity>
               </View>
 
@@ -301,11 +305,11 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                       style={styles.selectButton}
                       onPress={() => setShowDatePicker(true)}
                     >
-                      <FontAwesome6 name="calendar-days" size={16} color={COLORS.WhiteRGBA75} />
+                      <CalendarIcon size={16} color={COLORS.WhiteRGBA75} />
                       <Text style={styles.selectButtonTextCompact}>
                         {date || "Chọn..."}
                       </Text>
-                      <FontAwesome6 name="chevron-down" size={12} color={COLORS.WhiteRGBA50} />
+                      <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
                     </TouchableOpacity>
                   </View>
 
@@ -316,11 +320,11 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                       onPress={() => setShowTimePicker(true)}
                       disabled={!selectedRoom || !date}
                     >
-                      <FontAwesome6 name="clock" size={16} color={COLORS.WhiteRGBA75} />
+                      <Clock size={16} color={COLORS.WhiteRGBA75} />
                       <Text style={styles.selectButtonTextCompact}>
                         {time || "Chọn..."}
                       </Text>
-                      <FontAwesome6 name="chevron-down" size={12} color={COLORS.WhiteRGBA50} />
+                      <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -358,7 +362,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                     <ActivityIndicator color={COLORS.White} />
                   ) : (
                     <>
-                      <FontAwesome6 name="check" size={16} color={COLORS.White} />
+                      <Check size={16} color={COLORS.White} />
                       <Text style={styles.createButtonText}>Tạo lịch</Text>
                     </>
                   )}
@@ -381,7 +385,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Chọn phim</Text>
               <TouchableOpacity onPress={() => setShowMoviePicker(false)}>
-                <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+                <X size={24} color={COLORS.White} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -398,8 +402,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                     setShowMoviePicker(false);
                   }}
                 >
-                  <MaterialCommunityIcons
-                    name="movie-open"
+                  <Film
                     size={20}
                     color={selectedMovie === item._id ? COLORS.Orange : COLORS.WhiteRGBA75}
                   />
@@ -412,7 +415,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                     {item.title}
                   </Text>
                   {selectedMovie === item._id && (
-                    <FontAwesome6 name="check" size={18} color={COLORS.Orange} />
+                    <Check size={18} color={COLORS.Orange} />
                   )}
                 </TouchableOpacity>
               )}
@@ -433,7 +436,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Chọn phòng chiếu</Text>
               <TouchableOpacity onPress={() => setShowRoomPicker(false)}>
-                <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+                <X size={24} color={COLORS.White} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -451,8 +454,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                     setTime("");
                   }}
                 >
-                  <MaterialCommunityIcons
-                    name="door"
+                  <DoorOpen
                     size={20}
                     color={selectedRoom === item._id ? COLORS.Orange : COLORS.WhiteRGBA75}
                   />
@@ -465,7 +467,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                     {item.name}
                   </Text>
                   {selectedRoom === item._id && (
-                    <FontAwesome6 name="check" size={18} color={COLORS.Orange} />
+                    <Check size={18} color={COLORS.Orange} />
                   )}
                 </TouchableOpacity>
               )}
@@ -486,7 +488,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Chọn ngày chiếu</Text>
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+                <X size={24} color={COLORS.White} />
               </TouchableOpacity>
             </View>
             <Calendar
@@ -538,7 +540,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Chọn ca chiếu</Text>
               <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+                <X size={24} color={COLORS.White} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -560,8 +562,7 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                   disabled={!item.available}
                 >
                   <View style={styles.timeItemContent}>
-                    <FontAwesome6
-                      name="clock"
+                    <Clock
                       size={18}
                       color={
                         !item.available
@@ -584,17 +585,17 @@ const CreateScheduleModal: React.FC<CreateScheduleModalProps> = ({
                   {item.available ? (
                     <>
                       {time === item.time ? (
-                        <FontAwesome6 name="check" size={18} color={COLORS.Orange} />
+                        <Check size={18} color={COLORS.Orange} />
                       ) : (
                         <View style={styles.availableBadge}>
-                          <FontAwesome6 name="circle-check" size={14} color={COLORS.Green} />
+                          <CheckCircle size={14} color={COLORS.Green} />
                           <Text style={styles.availableBadgeText}>Khả dụng</Text>
                         </View>
                       )}
                     </>
                   ) : (
                     <View style={styles.unavailableBadge}>
-                      <FontAwesome6 name="circle-xmark" size={14} color={COLORS.Red} />
+                      <XCircle size={14} color={COLORS.Red} />
                       <Text style={styles.unavailableBadgeText}>Đã có lịch</Text>
                     </View>
                   )}
@@ -623,12 +624,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.85)",
     justifyContent: "center",
     alignItems: "center",
+    padding: SPACING.space_16,
   },
   modalContainer: {
-    width: "90%",
-    maxHeight: "85%",
+    width: "100%",
+    maxWidth: 500,
+    maxHeight: SCREEN_HEIGHT * 0.9,
     backgroundColor: COLORS.Black,
-    borderRadius: BORDER_RADIUS.radius_24,
+    borderRadius: BORDER_RADIUS.radius_20,
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
     overflow: "hidden",

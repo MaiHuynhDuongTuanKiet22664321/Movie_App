@@ -8,6 +8,8 @@ import PaymentScreen from '../src/screens/PaymentScreen';
 import SeatBookingScreen from '../src/screens/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 const Stack = createNativeStackNavigator();
@@ -67,10 +69,17 @@ const AppNavigator = () => {
 };
 
 const Tablayout = () => {
+  // Only render Toast on client to avoid SSR warning
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <UserProvider>
       <AppNavigator />
-      <Toast />
+      {isClient && <Toast />}
     </UserProvider>
   );
 };

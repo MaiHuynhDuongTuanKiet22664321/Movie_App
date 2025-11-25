@@ -8,7 +8,13 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const isSmallScreen = SCREEN_WIDTH < 380;
 import {
   BORDER_RADIUS,
   COLORS,
@@ -101,7 +107,10 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.overlay}
+      >
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
@@ -211,7 +220,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
             </View>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       {/* Info Dialog */}
       <InfoDialog
@@ -231,12 +240,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.85)",
     justifyContent: "center",
     alignItems: "center",
+    padding: SPACING.space_16,
   },
   modalContainer: {
-    width: "90%",
-    maxHeight: "85%",
+    width: "100%",
+    maxWidth: 500,
+    maxHeight: SCREEN_HEIGHT * 0.9,
     backgroundColor: COLORS.Black,
-    borderRadius: BORDER_RADIUS.radius_24,
+    borderRadius: BORDER_RADIUS.radius_20,
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
     overflow: "hidden",
