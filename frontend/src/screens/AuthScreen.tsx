@@ -1,4 +1,4 @@
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { AlertCircle, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
@@ -228,7 +228,7 @@ const AuthScreen = () => {
             {/* Error Message */}
             {error ? (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={16} color="#FF6347" />
+                <AlertCircle size={16} color="#FF6347" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -237,7 +237,7 @@ const AuthScreen = () => {
             <View style={styles.inputContainer}>
               {isSignUp && (
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                  <User size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Full Name"
@@ -249,7 +249,7 @@ const AuthScreen = () => {
               )}
 
               <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+                <Mail size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Email address"
@@ -263,7 +263,7 @@ const AuthScreen = () => {
 
               {isSignUp && (
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="call-outline" size={20} color="#666" style={styles.inputIcon} />
+                  <Phone size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Phone Number"
@@ -276,7 +276,7 @@ const AuthScreen = () => {
               )}
 
               <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                <Lock size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
@@ -287,17 +287,13 @@ const AuthScreen = () => {
                   autoCapitalize="none"
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons 
-                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                    size={20} 
-                    color="#666" 
-                  />
+                  {showPassword ? <Eye size={20} color="#666" /> : <EyeOff size={20} color="#666" />}
                 </TouchableOpacity>
               </View>
 
               {isSignUp && (
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                  <Lock size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Confirm Password"
@@ -308,11 +304,7 @@ const AuthScreen = () => {
                     autoCapitalize="none"
                   />
                   <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <Ionicons 
-                      name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} 
-                      size={20} 
-                      color="#666" 
-                    />
+                    {showConfirmPassword ? <Eye size={20} color="#666" /> : <EyeOff size={20} color="#666" />}
                   </TouchableOpacity>
                 </View>
               )}
@@ -349,12 +341,12 @@ const AuthScreen = () => {
             {/* Social Login Buttons */}
             <View style={styles.socialContainer}>
               <TouchableOpacity style={styles.socialButton} onPress={handleGoogleAuth}>
-                 <FontAwesome name="google" size={22} color="#DB4437" style={{ marginRight: 8 }} />
+                 <Text style={{ fontSize: 18, marginRight: 8 }}>G</Text>
                 <Text style={styles.socialButtonText}>Google</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.socialButton} onPress={handleFacebookAuth}>
-                 <FontAwesome name="facebook" size={22} color="#fff" style={{ marginRight: 8 }} />
+                 <Text style={{ fontSize: 18, marginRight: 8, color: '#fff' }}>f</Text>
                 <Text style={styles.socialButtonText}>Facebook</Text>
               </TouchableOpacity>
             </View>

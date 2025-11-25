@@ -17,8 +17,7 @@ import {
   SPACING,
 } from "../theme/theme";
 import { roomApi } from "../api/adminApi";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { X, CheckCircle, XCircle, Check } from "lucide-react-native";
 import SeatMapPreview, { RoomSize, ROOM_CONFIGS } from "../components/SeatMapPreview";
 import InfoDialog from "../components/InfoDialog";
 
@@ -108,7 +107,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Chỉnh sửa phòng chiếu</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+              <X size={24} color={COLORS.White} />
             </TouchableOpacity>
           </View>
 
@@ -136,8 +135,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
                   ]}
                   onPress={() => setStatus("active")}
                 >
-                  <FontAwesome6
-                    name="circle-check"
+                  <CheckCircle
                     size={20}
                     color={status === "active" ? COLORS.Green : COLORS.WhiteRGBA50}
                   />
@@ -158,8 +156,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
                   ]}
                   onPress={() => setStatus("inactive")}
                 >
-                  <FontAwesome6
-                    name="circle-xmark"
+                  <XCircle
                     size={20}
                     color={status === "inactive" ? COLORS.Red : COLORS.WhiteRGBA50}
                   />
@@ -205,7 +202,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
                   <ActivityIndicator color={COLORS.White} />
                 ) : (
                   <>
-                    <FontAwesome6 name="check" size={16} color={COLORS.White} />
+                    <Check size={16} color={COLORS.White} />
                     <Text style={styles.updateButtonText}>Cập nhật</Text>
                   </>
                 )}

@@ -13,8 +13,16 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { 
+  ArrowLeft, 
+  Star, 
+  Calendar, 
+  CalendarX, 
+  Clock, 
+  DoorOpen, 
+  Banknote, 
+  ChevronRight 
+} from "lucide-react-native";
 import {
   COLORS,
   SPACING,
@@ -128,7 +136,7 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <FontAwesome6 name="arrow-left" size={20} color={COLORS.White} />
+          <ArrowLeft size={20} color={COLORS.White} />
         </TouchableOpacity>
 
         <View style={styles.movieInfo}>
@@ -138,7 +146,7 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
               {movieData.title}
             </Text>
             <View style={styles.metaRow}>
-              <FontAwesome6 name="star" size={14} color={COLORS.Yellow} />
+              <Star size={14} color={COLORS.Yellow} fill={COLORS.Yellow} />
               <Text style={styles.rating}>{movieData.voteAverage?.toFixed(1)}</Text>
               <Text style={styles.metaText}>
                 • {movieData.runtime}p •{" "}
@@ -172,21 +180,13 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
         {/* Date Selection */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons
-              name="calendar-month"
-              size={24}
-              color={COLORS.Orange}
-            />
+            <Calendar size={24} color={COLORS.Orange} />
             <Text style={styles.sectionTitle}>Chọn ngày chiếu</Text>
           </View>
 
           {dates.length === 0 ? (
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="calendar-remove"
-                size={60}
-                color={COLORS.WhiteRGBA25}
-              />
+              <CalendarX size={60} color={COLORS.WhiteRGBA25} />
               <Text style={styles.emptyText}>
                 Chưa có lịch chiếu cho phim này
               </Text>
@@ -240,21 +240,13 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
         {selectedDate && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons
-                name="clock-outline"
-                size={24}
-                color={COLORS.Orange}
-              />
+              <Clock size={24} color={COLORS.Orange} />  
               <Text style={styles.sectionTitle}>Chọn suất chiếu</Text>
             </View>
 
             {getSchedulesForDate().length === 0 ? (
               <View style={styles.emptyState}>
-                <MaterialCommunityIcons
-                  name="clock-remove"
-                  size={60}
-                  color={COLORS.WhiteRGBA25}
-                />
+                <Clock size={60} color={COLORS.WhiteRGBA25} />
                 <Text style={styles.emptyText}>
                   Không có suất chiếu trong ngày này
                 </Text>
@@ -269,41 +261,25 @@ const MovieScheduleScreen = ({ navigation, route }: any) => {
                     activeOpacity={0.7}
                   >
                     <View style={styles.scheduleTime}>
-                      <FontAwesome6
-                        name="clock"
-                        size={18}
-                        color={COLORS.Orange}
-                      />
+                      <Clock size={18} color={COLORS.Orange} />
                       <Text style={styles.timeText}>{schedule.time}</Text>
                     </View>
                     <View style={styles.scheduleInfo}>
                       <View style={styles.infoRow}>
-                        <MaterialCommunityIcons
-                          name="door"
-                          size={16}
-                          color={COLORS.WhiteRGBA75}
-                        />
+                        <DoorOpen size={16} color={COLORS.WhiteRGBA75} />
                         <Text style={styles.infoText}>
                           {schedule.room?.name || "N/A"}
                         </Text>
                       </View>
                       <View style={styles.infoRow}>
-                        <FontAwesome6
-                          name="money-bill-wave"
-                          size={14}
-                          color={COLORS.WhiteRGBA75}
-                        />
+                        <Banknote size={14} color={COLORS.WhiteRGBA75} />
                         <Text style={styles.infoText}>
                           {(schedule.basePrice / 1000).toFixed(0)}K
                         </Text>
                       </View>
                     </View>
                     <View style={styles.arrowIcon}>
-                      <FontAwesome6
-                        name="chevron-right"
-                        size={16}
-                        color={COLORS.Orange}
-                      />
+                      <ChevronRight size={16} color={COLORS.Orange} />
                     </View>
                   </TouchableOpacity>
                 ))}

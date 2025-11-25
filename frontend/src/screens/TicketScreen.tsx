@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
-  ScrollView,
   RefreshControl,
+  ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -251,11 +251,36 @@ const TicketScreen = ({ navigation, route }: any) => {
       </View>
     );
 
+  // Render ticket list as a single item for vertical FlatList
+  const renderTicketSection = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.flatListContainer}
+      snapToInterval={320}
+      decelerationRate="fast"
+    >
+      {filteredTickets.length > 0 ? (
+        filteredTickets.map((item: any) => (
+          <View key={item._id}>
+            {renderTicketItem({ item })}
+          </View>
+        ))
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Không có vé nào</Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+
   return (
     <SafeAreaView style={styles.safeAreaViewContainer}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+      <FlatList
+        data={[{ key: 'tickets' }]}
+        renderItem={() => renderTicketSection()}
+        keyExtractor={(item) => item.key}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -267,107 +292,91 @@ const TicketScreen = ({ navigation, route }: any) => {
             tintColor={COLORS.Orange}
           />
         }
-      >
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>Vé của tôi</Text>
-          </View>
+        ListHeaderComponent={
+          <View>
+            <View style={styles.headerContainer}>
+              <Text style={styles.headerTitle}>Vé của tôi</Text>
+            </View>
 
-          <View style={styles.filterWrapper}>
-            <TouchableOpacity
-              style={[
-                styles.filterTab,
-                selectedFilter === "today" && styles.filterTabActive,
-              ]}
-              onPress={() => handleFilterChange("today")}
-            >
-              <Text
+            <View style={styles.filterWrapper}>
+              <TouchableOpacity
                 style={[
-                  styles.filterText,
-                  selectedFilter === "today" && styles.filterTextActive,
+                  styles.filterTab,
+                  selectedFilter === "today" && styles.filterTabActive,
                 ]}
+                onPress={() => handleFilterChange("today")}
               >
-                Hôm nay
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.filterTab,
-                selectedFilter === "upcoming" && styles.filterTabActive,
-              ]}
-              onPress={() => handleFilterChange("upcoming")}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  selectedFilter === "upcoming" && styles.filterTextActive,
-                ]}
-              >
-                Sắp tới
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.filterTab,
-                selectedFilter === "expired" && styles.filterTabActive,
-              ]}
-              onPress={() => handleFilterChange("expired")}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  selectedFilter === "expired" && styles.filterTextActive,
-                ]}
-              >
-                Hết hạn
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {selectedFilter === "upcoming" && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginTop: 8, gap: 8 }}
-            >
-              {upcomingDays.map((day) => (
-                <TouchableOpacity
-                  key={day}
+                <Text
                   style={[
-                    styles.filterDayTab,
-                    selectedUpcomingDay === day && styles.filterTabActive,
+                    styles.filterText,
+                    selectedFilter === "today" && styles.filterTextActive,
                   ]}
-                  onPress={() => setSelectedUpcomingDay(day)}
                 >
-                  <Text
+                  Hôm nay
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.filterTab,
+                  selectedFilter === "upcoming" && styles.filterTabActive,
+                ]}
+                onPress={() => handleFilterChange("upcoming")}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    selectedFilter === "upcoming" && styles.filterTextActive,
+                  ]}
+                >
+                  Sắp tới
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.filterTab,
+                  selectedFilter === "expired" && styles.filterTabActive,
+                ]}
+                onPress={() => handleFilterChange("expired")}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    selectedFilter === "expired" && styles.filterTextActive,
+                  ]}
+                >
+                  Hết hạn
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedFilter === "upcoming" && upcomingDays.length > 0 && (
+              <View style={styles.upcomingDaysRow}>
+                {upcomingDays.map((day) => (
+                  <TouchableOpacity
+                    key={day}
                     style={[
-                      styles.filterText,
-                      selectedUpcomingDay === day && styles.filterTextActive,
+                      styles.filterDayTab,
+                      selectedUpcomingDay === day && styles.filterTabActive,
                     ]}
+                    onPress={() => setSelectedUpcomingDay(day)}
                   >
-                    {day}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
-          <FlatList
-            data={filteredTickets}
-            renderItem={renderTicketItem}
-            keyExtractor={(item) => item._id}
-            horizontal
-            nestedScrollEnabled={true}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.flatListContainer}
-            snapToInterval={320}
-            decelerationRate="fast"
-          />
-
-        </View>
-      </ScrollView>
+                    <Text
+                      style={[
+                        styles.filterText,
+                        selectedUpcomingDay === day && styles.filterTextActive,
+                      ]}
+                    >
+                      {day}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        }
+      />
     </SafeAreaView>
   );
 };
@@ -492,6 +501,27 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerWrapper: {
+    marginRight: SPACING.space_16,
+  },
+  upcomingDaysRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+    gap: 8,
+    paddingHorizontal: SPACING.space_12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: SPACING.space_36,
+  },
+  emptyText: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.WhiteRGBA50,
   },
 });
 

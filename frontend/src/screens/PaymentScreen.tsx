@@ -9,8 +9,17 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { 
+  ArrowLeft, 
+  Clock, 
+  DoorOpen, 
+  Armchair, 
+  CreditCard, 
+  Banknote, 
+  Wallet, 
+  Check,
+  Calendar
+} from "lucide-react-native";
 import { getToken } from "../utils/storage";
 import {
   COLORS,
@@ -88,8 +97,9 @@ const PaymentScreen = ({ navigation, route }: any) => {
       }
       
       // Gọi backend endpoint để kiểm tra
+      const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
       const response = await fetch(
-        `http://localhost:5000/api/bookings/payment/check`,
+        `${API_URL}/bookings/payment/check`,
         {
           method: "POST",
           headers: {
@@ -205,7 +215,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <FontAwesome6 name="arrow-left" size={20} color={COLORS.White} />
+          <ArrowLeft size={20} color={COLORS.White} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Thanh toán</Text>
       </View>
@@ -228,29 +238,17 @@ const PaymentScreen = ({ navigation, route }: any) => {
                 {movieData.title}
               </Text>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons
-                  name="calendar"
-                  size={16}
-                  color={COLORS.WhiteRGBA75}
-                />
+                <Calendar size={16} color={COLORS.WhiteRGBA75} />
                 <Text style={styles.infoText}>
                   {new Date(schedule.date).toLocaleDateString("vi-VN")}
                 </Text>
               </View>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons
-                  name="clock-outline"
-                  size={16}
-                  color={COLORS.WhiteRGBA75}
-                />
+                <Clock size={16} color={COLORS.WhiteRGBA75} />
                 <Text style={styles.infoText}>{schedule.time}</Text>
               </View>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons
-                  name="door"
-                  size={16}
-                  color={COLORS.WhiteRGBA75}
-                />
+                <DoorOpen size={16} color={COLORS.WhiteRGBA75} />
                 <Text style={styles.infoText}>{schedule.room?.name}</Text>
               </View>
             </View>
@@ -265,11 +263,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
               <View style={styles.ticketItem}>
                 <View style={styles.ticketItemRow}>
                   <View style={styles.ticketItemLeft}>
-                    <MaterialCommunityIcons
-                      name="seat"
-                      size={20}
-                      color={COLORS.Green}
-                    />
+                    <Armchair size={20} color={COLORS.Green} />
                     <Text style={styles.ticketItemTitle}>Ghế thường</Text>
                     <Text style={styles.ticketItemSeats}>
                       {seatDetails.regularSeats.join(", ")}
@@ -306,8 +300,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
               ]}
               onPress={() => setPaymentMethod("cash")}
             >
-              <MaterialCommunityIcons
-                name="cash"
+              <Banknote
                 size={24}
                 color={
                   paymentMethod === "cash" ? COLORS.Orange : COLORS.WhiteRGBA75
@@ -322,11 +315,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                 Tiền mặt
               </Text>
               {paymentMethod === "cash" && (
-                <FontAwesome6
-                  name="circle-check"
-                  size={20}
-                  color={COLORS.Orange}
-                />
+                <Check size={20} color={COLORS.Orange} />
               )}
             </TouchableOpacity>
 
@@ -339,8 +328,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
               onPress={() => setPaymentMethod("momo")}
               disabled={true}
             >
-              <MaterialCommunityIcons
-                name="wallet"
+              <Wallet
                 size={24}
                 color={
                   paymentMethod === "momo" ? COLORS.Orange : COLORS.WhiteRGBA75
@@ -365,8 +353,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
               onPress={() => setPaymentMethod("bank")}
               disabled={false} // Đã bật
             >
-              <MaterialCommunityIcons
-                name="bank"
+              <CreditCard
                 size={24}
                 color={
                   paymentMethod === "bank" ? COLORS.Orange : COLORS.WhiteRGBA75
@@ -381,11 +368,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
                 Chuyển khoản (SePay)
               </Text>
               {paymentMethod === "bank" && (
-                <FontAwesome6
-                  name="circle-check"
-                  size={20}
-                  color={COLORS.Orange}
-                />
+                <Check size={20} color={COLORS.Orange} />
               )}
             </TouchableOpacity>
           </View>
@@ -432,11 +415,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
             <Text style={styles.payButtonText}>Đang kiểm tra...</Text>
           ) : (
             <>
-              <MaterialCommunityIcons
-                name={paymentMethod === "bank" ? "bank-check" : "check-circle"}
-                size={20}
-                color={COLORS.White}
-              />
+              <Check size={20} color={COLORS.White} />
               <Text style={styles.payButtonText}>
                 {paymentMethod === "bank"
                   ? "Tôi đã chuyển khoản"

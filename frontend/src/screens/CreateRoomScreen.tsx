@@ -17,8 +17,7 @@ import {
   SPACING,
 } from "../theme/theme";
 import { roomApi } from "../api/adminApi";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { X, Armchair, Plus } from "lucide-react-native";
 import SeatMapPreview, { RoomSize, ROOM_CONFIGS } from "../components/SeatMapPreview";
 import InfoDialog from "../components/InfoDialog";
 
@@ -108,7 +107,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Tạo phòng chiếu mới</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+              <X size={24} color={COLORS.White} />
             </TouchableOpacity>
           </View>
 
@@ -139,8 +138,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
                     onPress={() => setSelectedSize(key as RoomSize)}
                   >
                     <View style={styles.sizeHeader}>
-                      <MaterialCommunityIcons
-                        name="seat"
+                      <Armchair
                         size={24}
                         color={selectedSize === key ? COLORS.Orange : COLORS.WhiteRGBA50}
                       />
@@ -176,11 +174,11 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
               {/* Giải thích */}
               <View style={styles.infoBox}>
                 <View style={styles.infoRow}>
-                  <MaterialCommunityIcons name="seat" size={18} color={COLORS.Yellow} />
+                  <Armchair size={18} color={COLORS.Yellow} />
                   <Text style={styles.infoText}>Hàng A: Ghế VIP (màu vàng)</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <MaterialCommunityIcons name="seat" size={18} color={COLORS.WhiteRGBA50} />
+                  <Armchair size={18} color={COLORS.WhiteRGBA50} />
                   <Text style={styles.infoText}>Các hàng còn lại: Ghế thường</Text>
                 </View>
               </View>
@@ -205,7 +203,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onS
                   <ActivityIndicator color={COLORS.White} />
                 ) : (
                   <>
-                    <FontAwesome6 name="plus" size={16} color={COLORS.White} />
+                    <Plus size={16} color={COLORS.White} />
                     <Text style={styles.createButtonText}>Tạo phòng</Text>
                   </>
                 )}

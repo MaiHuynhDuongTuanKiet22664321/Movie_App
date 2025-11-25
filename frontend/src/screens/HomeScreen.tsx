@@ -21,7 +21,7 @@ import CategogyHeader from "../components/CategogyHeader";
 import SubMoviesCard from "../components/SubMoviesCard";
 import MoviesCard from "../components/MoviesCard";
 import { fetchAllMovies } from "../service/movie.service";
-import { Ionicons } from "@expo/vector-icons";
+import { Search } from "lucide-react-native";
 import React from "react";
 
 const { width } = Dimensions.get("window");
