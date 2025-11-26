@@ -83,8 +83,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
         const token = await getToken();
         console.log('🏦 [SePay] Token retrieved:', token ? '✅' : '❌');
         
-        const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
-        const response = await fetch(`${API_URL}/bookings/payment/config`, {
+        const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com';
+        const response = await fetch(`${BASE_URL}/api/bookings/payment/config`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -150,8 +150,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
       }
       
       // Gọi backend endpoint để kiểm tra
-      const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
-      const checkUrl = `${API_URL}/bookings/payment/check`;
+      const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com';
+      const checkUrl = `${BASE_URL}/api/bookings/payment/check`;
       console.log('🏦 [SePay] Checking transaction at:', checkUrl);
       
       const response = await fetch(checkUrl, {
