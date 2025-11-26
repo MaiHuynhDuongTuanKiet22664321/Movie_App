@@ -1,19 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Modal,
-  Dimensions,
 } from "react-native";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const isWeb = SCREEN_WIDTH > 768;
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import {
   BORDER_RADIUS,
   COLORS,
@@ -24,32 +20,35 @@ import {
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { roomApi } from "../api/adminApi";
-import CreateRoomModal from "./CreateRoomScreen";
-import EditRoomModal from "./EditRoomScreen";
-import SeatMapPreview, { RoomSize } from "../components/SeatMapPreview";
+import EditRoomModal from "./EditRoomScreen"; 
 import ConfirmDialog from "../components/ConfirmDialog";
 
+type RootStackParamList = {
+  AdminAddRoom: undefined;
+  AdminRoomManagement: undefined;
+  // Add other screen types as needed
+};
+
 const AdminRoomManagementScreen = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
-  const [viewingRoomSeats, setViewingRoomSeats] = useState<any>(null);
   const [deletingRoom, setDeletingRoom] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchData = async () => {
     try {
-      const roomsRes = await roomApi.getAll();
-      if (roomsRes.success) {
-        setRooms(roomsRes.data);
+      setLoading(true);
+      const res = await roomApi.getAll();
+      if (res.success) {
+        setRooms(res.data || []);
       }
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể tải dữ liệu. Vui lòng thử lại.");
+      Alert.alert("Lỗi", "Không thể tải danh sách phòng");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -57,17 +56,28 @@ const AdminRoomManagementScreen = () => {
     fetchData();
   }, []);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchData();
+    await fetchData();
+    setRefreshing(false);
   };
 
-  const handleEditRoom = (room: any) => {
+  const handleEdit = (room: any) => {
     setEditingRoom(room);
   };
 
-  const handleDeleteRoom = (room: any) => {
+  const handleDelete = (room: any) => {
     setDeletingRoom(room);
+  };
+
+  // Hàm xử lý xem chi tiết ghế
+  const handleViewSeats = (room: any) => {
+    // TODO: Tạo một Modal riêng để hiển thị sơ đồ ghế (RoomDetailScreen)
+    // AdminAddRoomScreen chỉ dùng để tạo mới, không dùng để view.
+    Alert.alert(
+      "Thông tin ghế", 
+      `Phòng: ${room.name}\nTổng số ghế: ${room.sodoghe?.length || 0}\n\n(Chức năng xem sơ đồ ghế chi tiết đang phát triển)`
+    );
   };
 
   const confirmDeleteRoom = async () => {
@@ -76,103 +86,92 @@ const AdminRoomManagementScreen = () => {
     setDeleteLoading(true);
     try {
       const result = await roomApi.delete(deletingRoom._id);
-      
       if (result.success) {
         setDeletingRoom(null);
         setDeleteLoading(false);
-        setTimeout(() => {
-          fetchData();
-        }, 300);
+        // Refresh lại danh sách sau khi xóa
+        fetchData(); 
+        Alert.alert("Thành công", "Đã xóa phòng chiếu");
       } else {
         setDeletingRoom(null);
         setDeleteLoading(false);
-        setTimeout(() => {
-          Alert.alert("Lỗi", result.message || "Không thể xóa phòng chiếu");
-        }, 300);
+        Alert.alert("Lỗi", result.message || "Không thể xóa phòng chiếu");
       }
     } catch (error: any) {
       setDeletingRoom(null);
       setDeleteLoading(false);
-      setTimeout(() => {
-        Alert.alert("Lỗi", error?.message || "Không thể kết nối đến server");
-      }, 300);
+      Alert.alert("Lỗi", error?.message || "Không thể kết nối đến server");
     }
   };
 
   const renderRoomCard = (room: any) => (
     <View key={room._id} style={styles.roomCard}>
       <View style={styles.roomCardHeader}>
-        <View style={styles.roomIconContainer}>
-          <MaterialCommunityIcons name="door-open" size={24} color={COLORS.Orange} />
-        </View>
         <View style={styles.roomHeaderInfo}>
           <Text style={styles.roomName}>{room.name}</Text>
           <View style={styles.roomMetaRow}>
-            <MaterialCommunityIcons name="seat" size={12} color={COLORS.WhiteRGBA75} />
-            <Text style={styles.roomMetaText}>{room.sodoghe?.length || 0} ghế</Text>
+            <View style={[
+              styles.roomStatusBadge,
+              room.size === "large" ? styles.roomStatusActive : styles.roomStatusInactive
+            ]}>
+              <View style={[
+                styles.statusDot,
+                room.size === "large" ? styles.dotActive : styles.dotInactive
+              ]} />
+            </View>
+            <Text style={styles.roomMetaText}>
+              {room.size === "small" ? "Phòng nhỏ" : room.size === "medium" ? "Phòng vừa" : "Phòng lớn"}
+            </Text>
           </View>
         </View>
-        <View
-          style={[
-            styles.roomStatusBadge,
-            room.status === "active" ? styles.roomStatusActive : styles.roomStatusInactive,
-          ]}
-        >
-          <View
-            style={[
-              styles.statusDot,
-              room.status === "active" ? styles.dotActive : styles.dotInactive,
-            ]}
-          />
+        <View style={styles.roomCardActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleEdit(room)}
+          >
+            <FontAwesome6 name="pen" size={14} color={COLORS.White} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={() => handleDelete(room)}
+          >
+            <FontAwesome6 name="trash" size={14} color={COLORS.White} />
+          </TouchableOpacity>
         </View>
       </View>
 
       <TouchableOpacity 
         style={styles.roomCardBody}
-        onPress={() => room.sodoghe?.length > 0 && setViewingRoomSeats(room)}
-        activeOpacity={room.sodoghe?.length > 0 ? 0.7 : 1}
+        onPress={() => handleViewSeats(room)}
+        activeOpacity={0.7}
       >
         <View style={styles.roomStatsContainer}>
           <View style={styles.roomStat}>
-            <Text style={styles.roomStatLabel}>Trạng thái</Text>
+            <MaterialCommunityIcons name="seat" size={24} color={COLORS.Orange} />
+            <Text style={styles.roomStatLabel}>Số ghế</Text>
             <Text style={styles.roomStatValue}>
-              {room.status === "active" ? "Hoạt động" : "Tạm ngừng"}
+              {room.sodoghe?.length || 0}
             </Text>
           </View>
           <View style={styles.roomStatDivider} />
           <View style={styles.roomStat}>
-            <Text style={styles.roomStatLabel}>Sử dụng</Text>
+            <MaterialCommunityIcons name="grid" size={24} color={COLORS.Green} />
+            <Text style={styles.roomStatLabel}>Bố cục</Text>
             <Text style={styles.roomStatValue}>
-              {room.sodoghe?.length > 0 
-                ? `0/${room.sodoghe.length}` 
-                : "Chưa có"}
+              {room.size === "small" ? "4×6" : room.size === "medium" ? "5×6" : "6×7"}
+            </Text>
+          </View>
+          <View style={styles.roomStatDivider} />
+          <View style={styles.roomStat}>
+            <MaterialCommunityIcons name="door" size={24} color={COLORS.White} />
+            <Text style={styles.roomStatLabel}>Loại</Text>
+            <Text style={styles.roomStatValue}>
+              {room.size === "small" ? "Standard" : room.size === "medium" ? "Deluxe" : "Premium"}
             </Text>
           </View>
         </View>
-        {room.sodoghe?.length > 0 && (
-          <Text style={styles.viewSeatsHint}>Nhấn để xem chi tiết</Text>
-        )}
+        <Text style={styles.viewSeatsHint}>Nhấn để xem chi tiết sơ đồ ghế</Text>
       </TouchableOpacity>
-
-      <View style={styles.roomCardActions}>
-        <TouchableOpacity
-          style={styles.roomActionButton}
-          onPress={() => handleEditRoom(room)}
-        >
-          <FontAwesome6 name="pen" size={14} color={COLORS.Orange} />
-          <Text style={styles.roomActionText}>Chỉnh sửa</Text>
-        </TouchableOpacity>
-
-        <View style={styles.actionDivider} />
-
-        <TouchableOpacity
-          style={styles.roomActionButton}
-          onPress={() => handleDeleteRoom(room)}
-        >
-          <FontAwesome6 name="trash-can" size={14} color={COLORS.Red} />
-          <Text style={[styles.roomActionText, { color: COLORS.Red }]}>Xóa</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 
@@ -214,100 +213,74 @@ const AdminRoomManagementScreen = () => {
             />
             <Text style={styles.emptyTitle}>Chưa có phòng chiếu</Text>
             <Text style={styles.emptySubtitle}>
-              Nhấn "Thêm phòng" để tạo phòng chiếu đầu tiên
+              Bắt đầu bằng cách tạo phòng chiếu đầu tiên của bạn
             </Text>
+            <TouchableOpacity
+              style={styles.emptyActionButton}
+              onPress={() => navigation.navigate("AdminAddRoom")}
+            >
+              <FontAwesome6 name="plus" size={16} color={COLORS.White} />
+              <Text style={styles.emptyActionText}>Tạo phòng mới</Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          rooms.map(renderRoomCard)
+          <>
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <MaterialCommunityIcons name="door" size={24} color={COLORS.Orange} />
+                <Text style={styles.statNumber}>{rooms.length}</Text>
+                <Text style={styles.statLabel}>Tổng phòng</Text>
+              </View>
+              <View style={styles.statCard}>
+                <MaterialCommunityIcons name="seat" size={24} color={COLORS.Green} />
+                <Text style={styles.statNumber}>
+                  {rooms.reduce((total, room) => total + (room.sodoghe?.length || 0), 0)}
+                </Text>
+                <Text style={styles.statLabel}>Tổng ghế</Text>
+              </View>
+              <View style={styles.statCard}>
+                <MaterialCommunityIcons name="grid" size={24} color={COLORS.White} />
+                <Text style={styles.statNumber}>
+                  {rooms.filter(r => r.size === "large").length}
+                </Text>
+                <Text style={styles.statLabel}>Phòng lớn</Text>
+              </View>
+            </View>
+            {rooms.map(renderRoomCard)}
+          </>
         )}
       </ScrollView>
 
-      <CreateRoomModal
-        visible={showCreateRoomModal}
-        onClose={() => setShowCreateRoomModal(false)}
-        onSuccess={fetchData}
-      />
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate("AdminAddRoom")}
+      >
+        <FontAwesome6 name="plus" size={20} color={COLORS.White} />
+      </TouchableOpacity>
 
+      {/* Modal Sửa phòng */}
       {editingRoom && (
         <EditRoomModal
           visible={!!editingRoom}
           room={editingRoom}
           onClose={() => setEditingRoom(null)}
-          onSuccess={fetchData}
+          onSuccess={() => {
+            setEditingRoom(null);
+            fetchData();
+          }}
         />
       )}
 
-      {viewingRoomSeats && (
-        <Modal
-          visible={!!viewingRoomSeats}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setViewingRoomSeats(null)}
-        >
-          <View style={styles.seatModalOverlay}>
-            <View style={styles.seatModalContainer}>
-              <View style={styles.seatModalHeader}>
-                <Text style={styles.seatModalTitle}>
-                  Sơ đồ ghế - {viewingRoomSeats.name}
-                </Text>
-                <TouchableOpacity onPress={() => setViewingRoomSeats(null)}>
-                  <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView style={styles.seatModalContent}>
-                <SeatMapPreview
-                  roomSize={
-                    viewingRoomSeats.sodoghe?.length <= 24
-                      ? RoomSize.SMALL
-                      : viewingRoomSeats.sodoghe?.length <= 30
-                      ? RoomSize.MEDIUM
-                      : RoomSize.LARGE
-                  }
-                  showLabels
-                  compact={false}
-                />
-                
-                <View style={styles.seatLegendContainer}>
-                  <View style={styles.seatLegendItem}>
-                    <MaterialCommunityIcons name="seat" size={20} color={COLORS.Green} />
-                    <Text style={styles.seatLegendText}>Còn trống</Text>
-                  </View>
-                  <View style={styles.seatLegendItem}>
-                    <MaterialCommunityIcons name="seat" size={20} color={COLORS.Red} />
-                    <Text style={styles.seatLegendText}>Đã đặt</Text>
-                  </View>
-                  <View style={styles.seatLegendItem}>
-                    <MaterialCommunityIcons name="seat" size={20} color={COLORS.Yellow} />
-                    <Text style={styles.seatLegendText}>VIP</Text>
-                  </View>
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-      )}
-
+      {/* Dialog xác nhận xóa */}
       <ConfirmDialog
         visible={!!deletingRoom}
         title="Xác nhận xóa"
-        message={`Bạn có chắc muốn xóa phòng chiếu "${deletingRoom?.name || 'này'}"?`}
-        confirmText="Xóa"
-        cancelText="Hủy"
+        message={`Bạn có chắc muốn xóa phòng "${deletingRoom?.name}"?`}
         onConfirm={confirmDeleteRoom}
         onCancel={() => setDeletingRoom(null)}
         loading={deleteLoading}
-        type="danger"
       />
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowCreateRoomModal(true)}
-        activeOpacity={0.8}
-      >
-        <FontAwesome6 name="plus" size={20} color={COLORS.White} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -351,20 +324,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.space_20,
     paddingBottom: SPACING.space_36,
   },
-  headerSection: {
-    marginBottom: SPACING.space_24,
-  },
-  sectionTitle: {
-    fontFamily: FONT_FAMILY.poppins_bold,
-    fontSize: FONT_SIZE.size_28,
-    color: COLORS.White,
-    marginBottom: SPACING.space_4,
-  },
-  headerSubtitle: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA75,
-  },
   fab: {
     position: "absolute",
     bottom: SPACING.space_24,
@@ -380,11 +339,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
-  },
-  fabText: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
   },
   roomCard: {
     backgroundColor: COLORS.DarkGrey,
@@ -463,43 +417,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
   },
-  roomStatLabel: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_10,
-    color: COLORS.WhiteRGBA50,
-    marginBottom: SPACING.space_4,
-  },
   roomStatValue: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
+    marginTop: SPACING.space_4,
+  },
+  roomStatLabel: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_10,
+    color: COLORS.WhiteRGBA50,
+    marginTop: SPACING.space_2,
+  },
+  roomCardActions: {
+    flexDirection: "row",
+    gap: SPACING.space_8,
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.radius_8,
+    backgroundColor: COLORS.WhiteRGBA10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteButton: {
+    backgroundColor: COLORS.Red + "20",
   },
   roomStatDivider: {
     width: 1,
     height: 30,
-    backgroundColor: COLORS.WhiteRGBA15,
-  },
-  roomCardActions: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: COLORS.WhiteRGBA15,
-    backgroundColor: COLORS.Black + "40",
-  },
-  roomActionButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: SPACING.space_12,
-    gap: SPACING.space_8,
-  },
-  roomActionText: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.Orange,
-  },
-  actionDivider: {
-    width: 1,
     backgroundColor: COLORS.WhiteRGBA15,
   },
   viewSeatsHint: {
@@ -509,58 +456,46 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: SPACING.space_8,
   },
-  seatModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.9)",
-    justifyContent: "center",
-    alignItems: "center",
+  statsContainer: {
+    flexDirection: "row",
+    gap: SPACING.space_12,
+    marginBottom: SPACING.space_20,
   },
-  seatModalContainer: {
-    width: isWeb ? "80%" : "95%",
-    maxWidth: isWeb ? 900 : undefined,
-    maxHeight: "90%",
-    backgroundColor: COLORS.Black,
-    borderRadius: BORDER_RADIUS.radius_20,
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.WhiteRGBA10,
+    borderRadius: BORDER_RADIUS.radius_12,
+    padding: SPACING.space_16,
+    alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
-    overflow: "hidden",
   },
-  seatModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: SPACING.space_20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.WhiteRGBA15,
-    backgroundColor: COLORS.DarkGrey,
-  },
-  seatModalTitle: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_18,
+  statNumber: {
+    fontFamily: FONT_FAMILY.poppins_bold,
+    fontSize: FONT_SIZE.size_24,
     color: COLORS.White,
-    flex: 1,
+    marginTop: SPACING.space_4,
   },
-  seatModalContent: {
-    padding: SPACING.space_20,
-  },
-  seatLegendContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: SPACING.space_20,
-    marginTop: SPACING.space_20,
-    paddingTop: SPACING.space_16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.WhiteRGBA15,
-  },
-  seatLegendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.space_8,
-  },
-  seatLegendText: {
+  statLabel: {
     fontFamily: FONT_FAMILY.poppins_regular,
     fontSize: FONT_SIZE.size_12,
     color: COLORS.WhiteRGBA75,
+    marginTop: SPACING.space_2,
+  },
+  emptyActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.Orange,
+    paddingHorizontal: SPACING.space_20,
+    paddingVertical: SPACING.space_12,
+    borderRadius: BORDER_RADIUS.radius_12,
+    gap: SPACING.space_8,
+    marginTop: SPACING.space_16,
+  },
+  emptyActionText: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.White,
   },
   emptyContainer: {
     flex: 1,

@@ -78,12 +78,27 @@ export const roomApi = {
 
   create: async (data: any) => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}/rooms`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data),
-    });
-    return response.json();
+    console.log("Creating room with data:", data);
+    console.log("Request headers:", headers);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/rooms`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      });
+      
+      console.log("Room creation response status:", response.status);
+      console.log("Room creation response headers:", response.headers);
+      
+      const result = await response.json();
+      console.log("Room creation response body:", result);
+      
+      return result;
+    } catch (error) {
+      console.log("Room creation fetch error:", error);
+      throw error;
+    }
   },
 
   update: async (id: string, data: any) => {

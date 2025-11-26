@@ -7,6 +7,11 @@ import MovieScheduleScreen from '../src/screens/MovieScheduleScreen';
 import PaymentScreen from '../src/screens/PaymentScreen';
 import SeatBookingScreen from '../src/screens/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AdminMovieManagementScreen from '../src/screens/AdminMovieManagementScreen';
+import AdminAddMovieScreen from '../src/screens/AdminAddMovieScreen';
+import AdminAddRoomScreen from '../src/screens/AdminAddRoomScreen';
+import AdminRoomManagementScreen from '../src/screens/AdminRoomManagementScreen';
+
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -63,7 +68,26 @@ const AppNavigator = () => {
         component={EditProfileScreen}
         options={{ animation: "slide_from_right" }}
       />
-
+      <Stack.Screen
+        name="AdminAddRoom"
+        component={AdminAddRoomScreen}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AdminMovieManagement"
+        component={AdminMovieManagementScreen}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AdminAddMovie"
+        component={AdminAddMovieScreen}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AdminRoomManagement"
+        component={AdminRoomManagementScreen}
+        options={{ animation: "slide_from_right" }}
+      />
     </Stack.Navigator>
   );
 };

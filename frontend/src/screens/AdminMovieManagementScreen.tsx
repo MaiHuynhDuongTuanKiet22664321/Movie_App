@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
   Alert,
   Image,
-  Modal,
   FlatList,
   Platform,
 } from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native"; // Import hook cần thiết
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
-const isWeb = Platform.OS === 'web';
 import {
   BORDER_RADIUS,
   COLORS,
@@ -22,21 +22,16 @@ import {
   FONT_SIZE,
   SPACING,
 } from "../theme/theme";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { movieApi } from "../api/adminApi";
-import { searchMovies, movieDetails, baseImagePath } from "../api/apicall";
+import { baseImagePath } from "../api/apicall";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 const AdminMovieManagementScreen = () => {
+  const navigation = useNavigation<any>(); // Sử dụng navigation
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-
+  
   const [deletingMovie, setDeletingMovie] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -54,67 +49,19 @@ const AdminMovieManagementScreen = () => {
     }
   };
 
-  useEffect(() => {
-    fetchMovies();
-  }, []);
+  // Tự động load lại danh sách mỗi khi màn hình này được focus (quay lại từ màn thêm)
+  useFocusEffect(
+    useCallback(() => {
+      fetchMovies();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchMovies();
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    setSearching(true);
-    try {
-      const response = await fetch(searchMovies(searchQuery));
-      const result = await response.json();
-      setSearchResults(result.results || []);
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể tìm kiếm phim");
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const handleAddMovie = async (tmdbMovie: any) => {
-    try {
-      // Get full movie details
-      const detailsResponse = await fetch(movieDetails(tmdbMovie.id));
-      const details = await detailsResponse.json();
-      
-      const movieData = {
-        tmdbId: tmdbMovie.id,
-        title: tmdbMovie.title,
-        originalTitle: tmdbMovie.original_title,
-        overview: tmdbMovie.overview,
-        posterUrl: tmdbMovie.poster_path ? `${baseImagePath("w500", tmdbMovie.poster_path)}` : "",
-        backdropUrl: tmdbMovie.backdrop_path ? `${baseImagePath("original", tmdbMovie.backdrop_path)}` : "",
-        releaseDate: tmdbMovie.release_date,
-        voteAverage: tmdbMovie.vote_average,
-        voteCount: tmdbMovie.vote_count,
-        runtime: details.runtime,
-        genres: details.genres,
-        tagline: details.tagline,
-      };
-
-      const result = await movieApi.add(movieData);
-      
-      if (result.success) {
-        Alert.alert("Thành công", "Đã thêm phim vào hệ thống");
-        setShowSearchModal(false);
-        setSearchQuery("");
-        setSearchResults([]);
-        fetchMovies();
-      } else {
-        Alert.alert("Lỗi", result.message || "Không thể thêm phim");
-      }
-    } catch (error: any) {
-      Alert.alert("Lỗi", error?.message || "Không thể thêm phim");
-    }
-  };
-
+  // Logic xóa phim (Giữ nguyên)
   const handleDeleteMovie = (movie: any) => {
     setDeletingMovie(movie);
   };
@@ -188,7 +135,7 @@ const AdminMovieManagementScreen = () => {
     </View>
   );
 
-  if (loading) {
+  if (loading && !refreshing && movies.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -228,7 +175,7 @@ const AdminMovieManagementScreen = () => {
             />
             <Text style={styles.emptyTitle}>Chưa có phim nào</Text>
             <Text style={styles.emptySubtitle}>
-              {"Nhấn Thêm phim để tìm kiếm và thêm phim vào hệ thống"}
+              {"Nhấn nút + bên dưới để thêm phim vào hệ thống"}
             </Text>
           </View>
         }
@@ -240,111 +187,6 @@ const AdminMovieManagementScreen = () => {
           />
         }
       />
-
-      {/* Search Modal */}
-      <Modal
-        visible={showSearchModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSearchModal(false)}
-      >
-        <View style={styles.searchModalOverlay}>
-          <View style={styles.searchModalContainer}>
-            {/* Header */}
-            <View style={styles.searchModalHeader}>
-              <Text style={styles.searchModalTitle}>Tìm kiếm và thêm phim</Text>
-              <TouchableOpacity 
-                style={styles.searchCloseButton} 
-                onPress={() => setShowSearchModal(false)}
-              >
-                <FontAwesome6 name="xmark" size={20} color={COLORS.White} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Search Input */}
-            <View style={styles.searchInputContainer}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Nhập tên phim để tìm kiếm..."
-                placeholderTextColor={COLORS.WhiteRGBA50}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearch}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-              <TouchableOpacity 
-                style={styles.searchSubmitButton} 
-                onPress={handleSearch}
-                disabled={!searchQuery.trim() || searching}
-              >
-                {searching ? (
-                  <ActivityIndicator size="small" color={COLORS.White} />
-                ) : (
-                  <FontAwesome6 name="magnifying-glass" size={16} color={COLORS.White} />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Search Results */}
-            <View style={styles.searchResultsContainer}>
-              {searching ? (
-                <View style={styles.searchLoadingContainer}>
-                  <ActivityIndicator size="large" color={COLORS.Orange} />
-                  <Text style={styles.searchLoadingText}>Đang tìm kiếm phim...</Text>
-                </View>
-              ) : searchResults.length > 0 ? (
-                <FlatList
-                  style={styles.searchResultsList}
-                  data={searchResults}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => (
-                    <View style={styles.searchResultCard}>
-                      <Image
-                        source={{ uri: `${baseImagePath("w154", item.poster_path)}` }}
-                        style={styles.searchResultPoster}
-                      />
-                      <View style={styles.searchResultContent}>
-                        <Text style={styles.searchResultTitle} numberOfLines={2}>
-                          {item.title}
-                        </Text>
-                        <Text style={styles.searchResultDate}>
-                          {item.release_date ? new Date(item.release_date).getFullYear() : "N/A"} • {item.original_language?.toUpperCase() || 'N/A'}
-                        </Text>
-                        <View style={styles.searchResultMeta}>
-                          <Text style={styles.searchResultRating}>⭐ {item.vote_average?.toFixed(1) || 'N/A'}</Text>
-                          <TouchableOpacity
-                            style={styles.searchAddButton}
-                            onPress={() => handleAddMovie(item)}
-                          >
-                            <FontAwesome6 name="plus" size={14} color={COLORS.White} />
-                            <Text style={styles.searchAddButtonText}>Thêm</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                  showsVerticalScrollIndicator={false}
-                />
-              ) : (
-                <View style={styles.searchEmptyContainer}>
-                  <MaterialCommunityIcons
-                    name="movie-search-outline"
-                    size={isWeb ? 80 : 60}
-                    color={COLORS.WhiteRGBA25}
-                  />
-                  <Text style={styles.searchEmptyTitle}>
-                    {searchQuery ? "Không tìm thấy phim nào" : "Bắt đầu tìm kiếm phim"}
-                  </Text>
-                  <Text style={styles.searchEmptySubtitle}>
-                    {searchQuery ? "Thử tìm với từ khóa khác" : "Nhập tên phim và nhấn tìm kiếm"}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <ConfirmDialog
         visible={!!deletingMovie}
@@ -358,10 +200,10 @@ const AdminMovieManagementScreen = () => {
         type="danger"
       />
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button - Điều hướng sang trang Add */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setShowSearchModal(true)}
+        onPress={() => navigation.navigate("AdminAddMovie")} 
         activeOpacity={0.8}
       >
         <FontAwesome6 name="plus" size={20} color={COLORS.White} />
@@ -371,6 +213,7 @@ const AdminMovieManagementScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  // Giữ nguyên style cũ của màn hình chính, xóa các style của Search Modal
   container: {
     flex: 1,
     backgroundColor: COLORS.Black,
@@ -407,21 +250,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SPACING.space_24,
     paddingTop: SPACING.space_20,
-    paddingBottom: SPACING.space_36,
-  },
-  headerSection: {
-    marginBottom: SPACING.space_24,
-  },
-  sectionTitle: {
-    fontFamily: FONT_FAMILY.poppins_bold,
-    fontSize: FONT_SIZE.size_28,
-    color: COLORS.White,
-    marginBottom: SPACING.space_4,
-  },
-  headerSubtitle: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA75,
+    paddingBottom: SPACING.space_10*8, // Tăng padding bottom để không bị FAB che
   },
   fab: {
     position: "absolute",
@@ -439,16 +268,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  fabText: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
-  },
-  moviesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.space_12,
-  },
+  // Các style cho Movie Card giữ nguyên như cũ
   movieCard: {
     width: "48%",
     backgroundColor: COLORS.DarkGrey,
@@ -544,164 +364,6 @@ const styles = StyleSheet.create({
     color: COLORS.WhiteRGBA50,
     textAlign: "center",
     paddingHorizontal: SPACING.space_48,
-  },
-  // Search Modal styles
-  searchModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: isWeb ? SPACING.space_32 : SPACING.space_16,
-  },
-  searchModalContainer: {
-    width: isWeb ? "85%" : "100%",
-    maxWidth: isWeb ? 900 : undefined,
-    maxHeight: isWeb ? "85%" : "90%",
-    backgroundColor: COLORS.Black,
-    borderRadius: BORDER_RADIUS.radius_20,
-    borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA15,
-    overflow: "hidden",
-  },
-  searchModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: isWeb ? SPACING.space_24 : SPACING.space_20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.WhiteRGBA15,
-    backgroundColor: COLORS.Black,
-  },
-  searchModalTitle: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_18,
-    color: COLORS.White,
-    flex: 1,
-  },
-  searchCloseButton: {
-    padding: SPACING.space_8,
-    borderRadius: BORDER_RADIUS.radius_8,
-    backgroundColor: COLORS.WhiteRGBA10,
-  },
-  searchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    margin: isWeb ? SPACING.space_24 : SPACING.space_20,
-    marginBottom: isWeb ? SPACING.space_20 : SPACING.space_16,
-    gap: SPACING.space_12,
-  },
-  searchInput: {
-    flex: 1,
-    height: isWeb ? 52 : 48,
-    backgroundColor: COLORS.WhiteRGBA10,
-    borderRadius: BORDER_RADIUS.radius_12,
-    paddingHorizontal: SPACING.space_16,
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_16,
-    color: COLORS.White,
-    borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA15,
-  },
-  searchSubmitButton: {
-    width: isWeb ? 52 : 48,
-    height: isWeb ? 52 : 48,
-    backgroundColor: COLORS.Orange,
-    borderRadius: BORDER_RADIUS.radius_12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  searchResultsContainer: {
-    flex: 1,
-    paddingHorizontal: isWeb ? SPACING.space_24 : SPACING.space_20,
-    paddingBottom: isWeb ? SPACING.space_24 : SPACING.space_20,
-  },
-  searchLoadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.space_16,
-  },
-  searchLoadingText: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_16,
-    color: COLORS.WhiteRGBA75,
-  },
-  searchResultsList: {
-    flex: 1,
-  },
-  searchResultCard: {
-    flexDirection: "row",
-    backgroundColor: COLORS.WhiteRGBA5,
-    borderRadius: BORDER_RADIUS.radius_12,
-    padding: SPACING.space_12,
-    marginBottom: SPACING.space_12,
-    borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA10,
-  },
-  searchResultPoster: {
-    width: isWeb ? 80 : 60,
-    height: isWeb ? 120 : 90,
-    borderRadius: BORDER_RADIUS.radius_8,
-    backgroundColor: COLORS.WhiteRGBA10,
-  },
-  searchResultContent: {
-    flex: 1,
-    marginLeft: SPACING.space_12,
-    justifyContent: "space-between",
-  },
-  searchResultTitle: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_16,
-    color: COLORS.White,
-    marginBottom: SPACING.space_4,
-  },
-  searchResultDate: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA75,
-    marginBottom: SPACING.space_8,
-  },
-  searchResultMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  searchResultRating: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.Orange,
-  },
-  searchAddButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.Green,
-    paddingHorizontal: SPACING.space_12,
-    paddingVertical: SPACING.space_8,
-    borderRadius: BORDER_RADIUS.radius_8,
-    gap: SPACING.space_8,
-  },
-  searchAddButtonText: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.White,
-  },
-  searchEmptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.space_16,
-  },
-  searchEmptyTitle: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_18,
-    color: COLORS.White,
-    textAlign: "center",
-  },
-  searchEmptySubtitle: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA50,
-    textAlign: "center",
   },
   columnWrapper:{
     gap: SPACING.space_12,
