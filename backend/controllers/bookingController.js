@@ -202,79 +202,117 @@ export const getPaymentConfig = async (req, res) => {
 
 export const checkPayment = async (req, res) => {
   try {
+    console.log('🏦 [SePay Backend] ===== CHECKING PAYMENT =====');
+    console.log('🏦 [SePay Backend] Request body:', req.body);
+    
     const { orderCode, totalPrice } = req.body;
-
     const SEPAY_API_TOKEN = process.env.SEPAY_API_TOKEN;
     const SEPAY_BANK_ACCOUNT = process.env.SEPAY_BANK_ACCOUNT;
-    
+    const SEPAY_BANK_ID = process.env.SEPAY_BANK_ID;
+
+    console.log('🏦 [SePay Backend] Environment check:', {
+      hasToken: !!SEPAY_API_TOKEN,
+      hasBankAccount: !!SEPAY_BANK_ACCOUNT,
+      hasBankId: !!SEPAY_BANK_ID,
+      bankAccount: SEPAY_BANK_ACCOUNT
+    });
+
     if (!SEPAY_API_TOKEN || !SEPAY_BANK_ACCOUNT) {
-      console.error('SePay configuration missing in environment variables');
+      console.error('🏦 [SePay Backend] Missing environment variables');
       return res.status(500).json({
         success: false,
-        message: 'Payment service not configured',
+        message: 'SePay configuration missing',
       });
     }
 
-    // Add validation for orderCode format and amount
-    if (!orderCode || !totalPrice || totalPrice <= 0) {
+    if (!orderCode || !totalPrice) {
+      console.error('🏦 [SePay Backend] Missing required parameters');
       return res.status(400).json({
         success: false,
-        message: 'Invalid payment parameters',
+        message: 'Order code and total price are required',
       });
     }
 
-    const response = await fetch("https://my.sepay.vn/userapi/transactions/list", {
-      method: "GET",
+    // Call SePay API to get transactions
+    const sepayUrl = `https://my.sepay.vn/userapi/transactions/list?${new URLSearchParams({
+      limit: '20',
+      transaction_date_min: new Date(Date.now() - 30 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '),
+    })}`;
+    
+    console.log('🏦 [SePay Backend] Calling SePay API:', sepayUrl);
+
+    const response = await fetch(sepayUrl, {
       headers: {
-        Authorization: `Bearer ${SEPAY_API_TOKEN}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${SEPAY_API_TOKEN}`,
+        'Content-Type': 'application/json',
       },
     });
 
+    console.log('🏦 [SePay Backend] SePay API response status:', response.status);
+
     if (!response.ok) {
-      console.warn("SePay API response not OK:", response.status);
-      return res.status(200).json({
-        success: true,
-        isPaid: null,
-        message: "Không thể kiểm tra thanh toán lúc này",
+      console.error('🏦 [SePay Backend] SePay API call failed:', response.status);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to verify payment with SePay',
       });
     }
 
     const data = await response.json();
+    console.log('🏦 [SePay Backend] SePay API response data:', data);
 
-    if (data.status === 200 && data.transactions && Array.isArray(data.transactions)) {
-      // Check for transactions within last 30 minutes to avoid old transactions
-      const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
-      
-      const isPaid = data.transactions.some((trans) => {
-        const transactionDate = new Date(trans.transaction_date).getTime();
-        const isRecent = transactionDate > thirtyMinutesAgo;
-        const amountMatch = parseFloat(trans.amount_in) >= totalPrice;
-        const contentMatch = trans.transaction_content?.includes(orderCode);
-        const accountMatch = trans.to_account === SEPAY_BANK_ACCOUNT;
-        
-        return isRecent && amountMatch && contentMatch && accountMatch;
-      });
-
-      return res.status(200).json({
-        success: true,
-        isPaid: isPaid,
-        message: isPaid ? "Đã nhận được thanh toán" : "Chưa nhận được thanh toán",
+    if (!data.transactions || !Array.isArray(data.transactions)) {
+      console.error('🏦 [SePay Backend] Invalid SePay response format');
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid payment verification response',
       });
     }
 
-    res.status(200).json({
-      success: true,
-      isPaid: false,
-      message: "Chưa nhận được thanh toán",
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+    console.log('🏦 [SePay Backend] Checking transactions in last 30 minutes');
+    console.log('🏦 [SePay Backend] Looking for:', {
+      orderCode,
+      totalPrice,
+      targetAccount: SEPAY_BANK_ACCOUNT
     });
 
-  } catch (error) {
-    console.error("SePay Check Error:", error);
-    res.status(200).json({
+    const isPaid = data.transactions.some((trans) => {
+      const transactionDate = new Date(trans.transaction_date).getTime();
+      const isRecent = transactionDate > thirtyMinutesAgo;
+      const amountMatch = parseFloat(trans.amount_in) >= totalPrice;
+      const contentMatch = trans.transaction_content?.includes(orderCode);
+      const accountMatch = trans.to_account === SEPAY_BANK_ACCOUNT;
+      
+      console.log('🏦 [SePay Backend] Transaction check:', {
+        id: trans.id,
+        amount: trans.amount_in,
+        content: trans.transaction_content,
+        account: trans.to_account,
+        date: trans.transaction_date,
+        isRecent,
+        amountMatch,
+        contentMatch,
+        accountMatch,
+        isMatch: isRecent && amountMatch && contentMatch && accountMatch
+      });
+      
+      return isRecent && amountMatch && contentMatch && accountMatch;
+    });
+
+    console.log('🏦 [SePay Backend] Final payment result:', isPaid);
+    console.log('🏦 [SePay Backend] ===== PAYMENT CHECK ENDED =====');
+
+    res.json({
       success: true,
-      isPaid: null,
-      message: "Lỗi khi kiểm tra thanh toán",
+      isPaid,
+      message: isPaid ? 'Payment verified' : 'Payment not found',
+    });
+  } catch (error) {
+    console.error('🏦 [SePay Backend] Payment check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Payment verification failed',
     });
   }
 };

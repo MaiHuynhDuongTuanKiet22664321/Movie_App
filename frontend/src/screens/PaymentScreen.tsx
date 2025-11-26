@@ -61,29 +61,52 @@ const PaymentScreen = ({ navigation, route }: any) => {
     ? `https://qr.sepay.vn/img?acc=${sepayConfig.bankAccount}&bank=${sepayConfig.bankId}&amount=${totalPrice}&des=${orderCode}`
     : null;
 
+  // Log QR URL generation
+  useEffect(() => {
+    if (qrUrl && sepayConfig) {
+      console.log('🏦 [SePay] QR URL generated:', qrUrl);
+      console.log('🏦 [SePay] QR components:', {
+        account: sepayConfig.bankAccount,
+        bank: sepayConfig.bankId,
+        amount: totalPrice,
+        description: orderCode
+      });
+    }
+  }, [qrUrl, sepayConfig, totalPrice, orderCode]);
+
   // Fetch SePay config from backend
   useEffect(() => {
     const fetchPaymentConfig = async () => {
       try {
+        console.log('🏦 [SePay] Starting payment config fetch...');
+        
         const token = await getToken();
-        if (!token) return;
-
+        console.log('🏦 [SePay] Token retrieved:', token ? '✅' : '❌');
+        
         const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
         const response = await fetch(`${API_URL}/bookings/payment/config`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
+        
+        console.log('🏦 [SePay] Config fetch response status:', response.status);
+        
         const data = await response.json();
+        console.log('🏦 [SePay] Config fetch response:', data);
+        
         if (data.success) {
           setSepayConfig(data.data);
+          console.log('🏦 [SePay] Config set successfully:', {
+            bankAccount: data.data.bankAccount,
+            bankId: data.data.bankId
+          });
+        } else {
+          console.error('🏦 [SePay] Config fetch failed:', data.message);
         }
       } catch (error) {
-        console.error("Failed to fetch payment config:", error);
+        console.error('🏦 [SePay] Config fetch error:', error);
       }
     };
-
+    
     fetchPaymentConfig();
   }, []);
 
@@ -108,11 +131,15 @@ const PaymentScreen = ({ navigation, route }: any) => {
   // --- HÀM KIỂM TRA THANH TOÁN (GỌI BACKEND PROXY) ---
   const checkSePayTransaction = async () => {
     try {
+      console.log('🏦 [SePay] Starting transaction check...');
+      console.log('🏦 [SePay] Check data:', { orderCode, totalPrice });
+      
       // Lấy token từ storage utility (hỗ trợ cả native và web)
       const token = await getToken();
+      console.log('🏦 [SePay] Token for transaction check:', token ? '✅' : '❌');
       
       if (!token) {
-        console.error("No auth token found");
+        console.error('🏦 [SePay] No auth token found');
         setDialogConfig({
           type: "error",
           title: "Lỗi xác thực",
@@ -124,52 +151,72 @@ const PaymentScreen = ({ navigation, route }: any) => {
       
       // Gọi backend endpoint để kiểm tra
       const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
-      const response = await fetch(
-        `${API_URL}/bookings/payment/check`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orderCode,
-            totalPrice,
-          }),
-        }
-      );
+      const checkUrl = `${API_URL}/bookings/payment/check`;
+      console.log('🏦 [SePay] Checking transaction at:', checkUrl);
+      
+      const response = await fetch(checkUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderCode,
+          totalPrice,
+        }),
+      });
+
+      console.log('🏦 [SePay] Transaction check response status:', response.status);
+      console.log('🏦 [SePay] Transaction check response ok:', response.ok);
 
       const data = await response.json();
+      console.log('🏦 [SePay] Transaction check response data:', data);
       
       if (data.success) {
+        console.log('🏦 [SePay] Transaction check result isPaid:', data.isPaid);
         return data.isPaid; // true, false, hoặc null
       }
       
+      console.error('🏦 [SePay] Transaction check failed:', data.message);
       return null; // Lỗi
     } catch (error) {
-      console.error("Payment Check Error:", error);
+      console.error('🏦 [SePay] Transaction check error:', error);
       return null; // Lỗi
     }
   };
 
   // --- HÀM XỬ LÝ THANH TOÁN CHÍNH ---
   const handlePayment = async () => {
+    console.log('🏦 [SePay] ===== STARTING PAYMENT PROCESS =====');
+    console.log('🏦 [SePay] Payment method:', paymentMethod);
+    console.log('🏦 [SePay] Payment data:', {
+      scheduleId,
+      selectedSeats,
+      totalPrice,
+      orderCode
+    });
+    
     setProcessing(true);
 
     try {
       // 1. Validation cơ bản
       if (!scheduleId || !selectedSeats.length || !totalPrice) {
+        console.error('🏦 [SePay] Validation failed - missing data');
         throw new Error("Thông tin đặt vé không hợp lệ");
       }
 
       // 2. Xử lý riêng cho Chuyển khoản Ngân hàng
       if (paymentMethod === "bank") {
+        console.log('🏦 [SePay] Processing bank payment method...');
         const isPaid = await checkSePayTransaction();
+
+        console.log('🏦 [SePay] Transaction check result:', isPaid);
 
         // isPaid = true: Đã thanh toán
         // isPaid = false: Chưa thanh toán
         // isPaid = null: Không xác định được (lỗi API)
         if (isPaid === false) {
+          console.log('🏦 [SePay] Payment not received - showing warning');
           setDialogConfig({
             type: "warning",
             title: "Chưa nhận được tiền",
@@ -181,6 +228,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
         }
 
         if (isPaid === null) {
+          console.log('🏦 [SePay] API error - unable to check payment');
           // Không thể kết nối tới SePay, hỏi người dùng có muốn tiếp tục không
           setDialogConfig({
             type: "warning",
@@ -192,10 +240,12 @@ const PaymentScreen = ({ navigation, route }: any) => {
           return;
         }
 
+        console.log('🏦 [SePay] Payment verified - proceeding with booking');
         // isPaid = true: Tiếp tục đặt vé
       }
 
       // 3. Gọi API Đặt vé (Cho cả Cash và Bank đã thanh toán thành công)
+      console.log('🏦 [SePay] Creating booking...');
       const { bookingApi } = await import("../api/bookingApi");
 
       const result = await bookingApi.createBooking({
@@ -205,7 +255,10 @@ const PaymentScreen = ({ navigation, route }: any) => {
         paymentMethod,
       });
 
+      console.log('🏦 [SePay] Booking result:', result);
+
       if (result.success) {
+        console.log('🏦 [SePay] ===== PAYMENT SUCCESS =====');
         setDialogConfig({
           type: "success",
           title: "Đặt vé thành công",
@@ -220,9 +273,11 @@ const PaymentScreen = ({ navigation, route }: any) => {
           navigation.goBack();
         }, 2000);
       } else {
+        console.error('🏦 [SePay] Booking failed:', result.message);
         throw new Error(result.message || "Đặt vé thất bại");
       }
     } catch (error: any) {
+      console.error('🏦 [SePay] Payment process error:', error);
       setDialogConfig({
         type: "error",
         title: "Lỗi",
@@ -231,6 +286,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
       setDialogVisible(true);
     } finally {
       setProcessing(false);
+      console.log('🏦 [SePay] ===== PAYMENT PROCESS ENDED =====');
     }
   };
 
