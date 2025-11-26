@@ -17,11 +17,11 @@ const router = express.Router();
 router.get('/', getAllRooms);
 router.get('/:id', getRoomById);
 router.post('/', protect, createRoom);
+router.put('/:id/seatmap', protect, updateSeatMap); // Phải đặt trước /:id vì cùng method PUT
+router.post('/:id/seats', protect, addSeat); // Phải đặt trước /:id vì cùng method POST
+router.delete('/:id/seats', protect, removeSeat); // Phải đặt trước /:id vì cùng method DELETE
+router.patch('/:id/seats', protect, updateSeat); // Phải đặt trước /:id vì cùng method PATCH
 router.put('/:id', protect, updateRoom);
 router.delete('/:id', protect, deleteRoom);
-router.put('/:id/seatmap', protect, updateSeatMap);
-router.post('/:id/seats', protect, addSeat);
-router.delete('/:id/seats', protect, removeSeat);
-router.patch('/:id/seats', protect, updateSeat);
 
 export default router;
