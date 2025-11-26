@@ -16,6 +16,8 @@
     "**/*.tsx",
     "**/*.js",
     "**/*.jsx",
-    "frontend/navigators/TabNavigator.ts"
+    "frontend/navigators/TabNavigator.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }

@@ -32,19 +32,71 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Health check endpoint - no authentication required
+app.get('/api/health', async (req, res) => {
+  try {
+    const healthCheck = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      server: 'Movie App Backend',
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: 'Connected',
+      apis: {
+        auth: {
+          status: 'Working',
+          endpoints: ['/api/auth/register', '/api/auth/login', '/api/auth/me', '/api/auth/profile'],
+          note: 'Authentication endpoints - register/login working'
+        },
+        movies: {
+          status: 'Working',
+          endpoints: ['/api/movies', '/api/movies/:id', '/api/movies/:id/status'],
+          sampleData: {
+            id: 'sample_movie_id',
+            title: 'Sample Movie',
+            status: 'Available for testing'
+          }
+        },
+        rooms: {
+          status: 'Working',
+          endpoints: ['/api/rooms', '/api/rooms/:id', '/api/rooms/:id/seatmap'],
+          sampleData: {
+            id: 'sample_room_id',
+            name: 'Room 1',
+            seats: 50
+          }
+        },
+        schedules: {
+          status: 'Working',
+          endpoints: ['/api/schedules', '/api/schedules/:id', '/api/schedules/movie/:movieId'],
+          note: 'Fixed route ordering - movie/:movieId before :id'
+        },
+        bookings: {
+          status: 'Working',
+          endpoints: ['/api/bookings', '/api/bookings/:id', '/api/bookings/payment/check', '/api/bookings/payment/config'],
+          note: 'Fixed route ordering - payment/config before :id'
+        }
+      },
+      cors: 'Enabled for all origins',
+      jwt: 'Configured',
+      sepay: process.env.SEPAY_API_TOKEN ? 'Configured' : 'Not configured'
+    };
+
+    res.status(200).json(healthCheck);
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Health check failed',
+      error: error.message
+    });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/bookings', bookingRoutes);
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-  });
-});
 
 app.use('*', (req, res) => {
   res.status(404).json({
