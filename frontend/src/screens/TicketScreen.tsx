@@ -15,6 +15,23 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 
+// Define ticket type
+interface Ticket {
+  _id: string;
+  PosterImage: string;
+  movieTitle: string;
+  date: {
+    date: string;
+    day: string;
+  };
+  time: string;
+  room: string;
+  seatArray: string[];
+  totalPrice: number;
+  transactionId: string;
+  scheduleDate: Date;
+}
+
 import {
   BORDER_RADIUS,
   COLORS,
@@ -29,19 +46,16 @@ import QRCode from "react-native-qrcode-svg";
 
 const TicketScreen = ({ navigation, route }: any) => {
   const { user } = useUser();
-  const [allTickets, setAllTickets] = useState([]);
-  const [filteredTickets, setFilteredTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState<
-    "today" | "upcoming" | "expired"
-  >("today");
-
+  const isAdmin = user?.role === 'admin';
+  const [allTickets, setAllTickets] = useState<Ticket[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [upcomingDays, setUpcomingDays] = useState<string[]>([]);
   const [selectedUpcomingDay, setSelectedUpcomingDay] = useState<string | null>(
     null
   );
-
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [filter, setFilter] = useState("upcoming");
+  const [selectedFilter, setSelectedFilter] = useState<"today" | "upcoming" | "expired">("upcoming");
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const formatTicket = (ticket: any) => ({
@@ -234,7 +248,6 @@ const TicketScreen = ({ navigation, route }: any) => {
               size={130}
               backgroundColor="transparent"
               color="black"
-              logo={require("../assets/image/logo.jpg")}
               logoSize={32}
               logoBackgroundColor="transparent"
             />

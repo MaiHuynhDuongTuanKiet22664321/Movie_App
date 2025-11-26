@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -30,12 +30,6 @@ import {
 } from "../theme/theme";
 import InfoDialog from "../components/InfoDialog";
 
-const SEPAY_CONFIG = {
-
-  BANK_ACCOUNT: "0395324779", 
-  BANK_ID: "MBBank", 
-};
-
 const PaymentScreen = ({ navigation, route }: any) => {
   const { scheduleId, movieData, schedule, selectedSeats, totalPrice } =
     route.params;
@@ -46,6 +40,10 @@ const PaymentScreen = ({ navigation, route }: any) => {
   );
   const [processing, setProcessing] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [sepayConfig, setSepayConfig] = useState<{
+    bankAccount: string;
+    bankId: string;
+  } | null>(null);
   const [dialogConfig, setDialogConfig] = useState({
     type: "success" as "success" | "error" | "warning",
     title: "",
@@ -59,7 +57,35 @@ const PaymentScreen = ({ navigation, route }: any) => {
   }, []);
 
   // Tạo URL QR Code động
-  const qrUrl = `https://qr.sepay.vn/img?acc=${SEPAY_CONFIG.BANK_ACCOUNT}&bank=${SEPAY_CONFIG.BANK_ID}&amount=${totalPrice}&des=${orderCode}`;
+  const qrUrl = sepayConfig 
+    ? `https://qr.sepay.vn/img?acc=${sepayConfig.bankAccount}&bank=${sepayConfig.bankId}&amount=${totalPrice}&des=${orderCode}`
+    : null;
+
+  // Fetch SePay config from backend
+  useEffect(() => {
+    const fetchPaymentConfig = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://movie-ticket-xncx.onrender.com/api';
+        const response = await fetch(`${API_URL}/bookings/payment/config`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setSepayConfig(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment config:", error);
+      }
+    };
+
+    fetchPaymentConfig();
+  }, []);
 
   const basePrice = schedule.basePrice || 75000;
 
@@ -379,11 +405,18 @@ const PaymentScreen = ({ navigation, route }: any) => {
           <View style={styles.qrSection}>
             <Text style={styles.qrTitle}>Quét mã để thanh toán</Text>
             <View style={styles.qrContainer}>
-              <Image
-                source={{ uri: qrUrl }}
-                style={styles.qrImage}
-                resizeMode="contain"
-              />
+              {qrUrl ? (
+                <Image
+                  source={{ uri: qrUrl }}
+                  style={styles.qrImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <View style={[styles.qrImage, styles.qrPlaceholder]}>
+                  <ActivityIndicator size="large" color={COLORS.Orange} />
+                  <Text style={styles.qrPlaceholderText}>Đang tải mã QR...</Text>
+                </View>
+              )}
               {/* Loading overlay khi đang check */}
               {processing && (
                 <View style={styles.qrLoadingOverlay}>
@@ -601,6 +634,16 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   qrImage: { width: 200, height: 200 },
+  qrPlaceholder: {
+    backgroundColor: COLORS.DarkGrey,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrPlaceholderText: {
+    color: COLORS.White,
+    marginTop: 10,
+    fontSize: 12,
+  },
   qrLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255,255,255,0.8)",

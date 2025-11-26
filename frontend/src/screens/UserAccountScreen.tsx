@@ -59,10 +59,11 @@ const UserAccountScreen = ({ navigation }: any) => {
         }
       >
         <View style={styles.profileContainer}>
-          <Image
-            source={require("../assets/image/avatar.png")}
-            style={styles.avatarImage}
-          />
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>
+              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+            </Text>
+          </View>
           <Text style={styles.avatarText}>
             {user?.fullName || "Guest User"}
           </Text>
@@ -129,10 +130,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: SPACING.space_28,
   },
-  avatarImage: {
+  avatarPlaceholder: {
     height: 90,
     width: 90,
     borderRadius: 45,
+    backgroundColor: '#FF8C42',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitial: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   avatarText: {
     fontFamily: FONT_FAMILY.poppins_medium,

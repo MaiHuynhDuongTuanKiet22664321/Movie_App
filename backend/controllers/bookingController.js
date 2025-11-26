@@ -171,17 +171,55 @@ export const getTicketById = async (req, res) => {
   }
 };
 
+export const getPaymentConfig = async (req, res) => {
+  try {
+    const SEPAY_BANK_ACCOUNT = process.env.SEPAY_BANK_ACCOUNT;
+    const SEPAY_BANK_ID = process.env.SEPAY_BANK_ID;
+    
+    if (!SEPAY_BANK_ACCOUNT || !SEPAY_BANK_ID) {
+      return res.status(500).json({
+        success: false,
+        message: 'Payment service not configured',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bankAccount: SEPAY_BANK_ACCOUNT,
+        bankId: SEPAY_BANK_ID,
+      },
+    });
+
+  } catch (error) {
+    console.error("Get Payment Config Error:", error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy cấu hình thanh toán',
+    });
+  }
+};
+
 export const checkPayment = async (req, res) => {
   try {
     const { orderCode, totalPrice } = req.body;
 
     const SEPAY_API_TOKEN = process.env.SEPAY_API_TOKEN;
+    const SEPAY_BANK_ACCOUNT = process.env.SEPAY_BANK_ACCOUNT;
     
-    if (!SEPAY_API_TOKEN) {
-      console.error('SEPAY_API_TOKEN not configured in environment variables');
+    if (!SEPAY_API_TOKEN || !SEPAY_BANK_ACCOUNT) {
+      console.error('SePay configuration missing in environment variables');
       return res.status(500).json({
         success: false,
         message: 'Payment service not configured',
+      });
+    }
+
+    // Add validation for orderCode format and amount
+    if (!orderCode || !totalPrice || totalPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment parameters',
       });
     }
 
@@ -205,10 +243,17 @@ export const checkPayment = async (req, res) => {
     const data = await response.json();
 
     if (data.status === 200 && data.transactions && Array.isArray(data.transactions)) {
+      // Check for transactions within last 30 minutes to avoid old transactions
+      const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+      
       const isPaid = data.transactions.some((trans) => {
+        const transactionDate = new Date(trans.transaction_date).getTime();
+        const isRecent = transactionDate > thirtyMinutesAgo;
         const amountMatch = parseFloat(trans.amount_in) >= totalPrice;
         const contentMatch = trans.transaction_content?.includes(orderCode);
-        return amountMatch && contentMatch;
+        const accountMatch = trans.to_account === SEPAY_BANK_ACCOUNT;
+        
+        return isRecent && amountMatch && contentMatch && accountMatch;
       });
 
       return res.status(200).json({

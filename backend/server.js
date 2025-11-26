@@ -10,11 +10,25 @@ import bookingRoutes from './routes/bookingRoutes.js';
 
 dotenv.config();
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET is required in environment variables');
+  process.exit(1);
+}
+
 connectDB();
 
 const app = express();
 
-app.use(cors());
+// CORS configuration for mobile app
+app.use(cors({
+  origin: [
+    '*' // Fallback for development
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -49,8 +63,10 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
 
 export default app;
