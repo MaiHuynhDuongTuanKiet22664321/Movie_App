@@ -5,7 +5,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
 } from "react-native";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const isWeb = SCREEN_WIDTH > 768;
 import {
   BORDER_RADIUS,
   COLORS,
@@ -95,11 +99,11 @@ const styles = StyleSheet.create({
     padding: SPACING.space_24,
   },
   dialog: {
-    width: "100%",
-    maxWidth: 400,
+    width: isWeb ? "90%" : "100%",
+    maxWidth: isWeb ? 500 : 400,
     backgroundColor: COLORS.Black,
     borderRadius: BORDER_RADIUS.radius_20,
-    padding: SPACING.space_24,
+    padding: isWeb ? SPACING.space_32 : SPACING.space_24,
     alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,

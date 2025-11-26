@@ -10,9 +10,11 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  Platform,
 } from "react-native";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const isWeb = Platform.OS === 'web';
 import {
   BORDER_RADIUS,
   COLORS,
@@ -580,8 +582,8 @@ const styles = StyleSheet.create({
     padding: SPACING.space_16,
   },
   modalContainer: {
-    width: "100%",
-    maxWidth: 500,
+    width: isWeb ? "85%" : "100%",
+    maxWidth: isWeb ? 900 : 500,
     maxHeight: SCREEN_HEIGHT * 0.9,
     backgroundColor: COLORS.Black,
     borderRadius: BORDER_RADIUS.radius_20,
@@ -613,7 +615,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: SPACING.space_20,
+    padding: isWeb ? SPACING.space_32 : SPACING.space_20,
   },
   movieInfo: {
     flexDirection: "row",
@@ -728,7 +730,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
     borderTopLeftRadius: BORDER_RADIUS.radius_24,
     borderTopRightRadius: BORDER_RADIUS.radius_24,
-    maxHeight: "70%",
+    maxHeight: isWeb ? "80%" : "70%",
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
   },

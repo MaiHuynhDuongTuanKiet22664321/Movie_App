@@ -3,7 +3,6 @@ import {
   Text,
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
@@ -12,7 +11,10 @@ import {
   Image,
   Modal,
   FlatList,
+  Platform,
 } from "react-native";
+
+const isWeb = Platform.OS === 'web';
 import {
   BORDER_RADIUS,
   COLORS,
@@ -209,20 +211,15 @@ const AdminMovieManagementScreen = () => {
         <Text style={styles.headerTitle}>Quản lý phim chiếu</Text>
       </View>
 
-      <ScrollView
+      <FlatList
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.Orange}
-          />
-        }
-      >
-
-
-        {movies.length === 0 ? (
+        data={movies}
+        renderItem={({ item }) => renderMovieCard(item)}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        keyExtractor={(item) => item._id}
+        ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons
               name="movie-open"
@@ -234,85 +231,117 @@ const AdminMovieManagementScreen = () => {
               {"Nhấn Thêm phim để tìm kiếm và thêm phim vào hệ thống"}
             </Text>
           </View>
-        ) : (
-          <View style={styles.moviesGrid}>
-            <FlatList data={movies} renderItem={({ item }) => renderMovieCard(item)} numColumns={2} columnWrapperStyle={styles.columnWrapper} />
-          </View>
-        )}
-      </ScrollView>
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.Orange}
+          />
+        }
+      />
 
       {/* Search Modal */}
       <Modal
         visible={showSearchModal}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowSearchModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Tìm kiếm phim</Text>
-              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
-                <FontAwesome6 name="xmark" size={24} color={COLORS.White} />
+        <View style={styles.searchModalOverlay}>
+          <View style={styles.searchModalContainer}>
+            {/* Header */}
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.searchModalTitle}>Tìm kiếm và thêm phim</Text>
+              <TouchableOpacity 
+                style={styles.searchCloseButton} 
+                onPress={() => setShowSearchModal(false)}
+              >
+                <FontAwesome6 name="xmark" size={20} color={COLORS.White} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchContainer}>
+            {/* Search Input */}
+            <View style={styles.searchInputContainer}>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Nhập tên phim..."
+                placeholder="Nhập tên phim để tìm kiếm..."
                 placeholderTextColor={COLORS.WhiteRGBA50}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 onSubmitEditing={handleSearch}
+                autoCapitalize="words"
+                autoCorrect={false}
               />
-              <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                <FontAwesome6 name="magnifying-glass" size={18} color={COLORS.White} />
+              <TouchableOpacity 
+                style={styles.searchSubmitButton} 
+                onPress={handleSearch}
+                disabled={!searchQuery.trim() || searching}
+              >
+                {searching ? (
+                  <ActivityIndicator size="small" color={COLORS.White} />
+                ) : (
+                  <FontAwesome6 name="magnifying-glass" size={16} color={COLORS.White} />
+                )}
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.searchResults}>
+            {/* Search Results */}
+            <View style={styles.searchResultsContainer}>
               {searching ? (
-                <View style={styles.searchingContainer}>
+                <View style={styles.searchLoadingContainer}>
                   <ActivityIndicator size="large" color={COLORS.Orange} />
-                  <Text style={styles.searchingText}>Đang tìm kiếm...</Text>
+                  <Text style={styles.searchLoadingText}>Đang tìm kiếm phim...</Text>
                 </View>
               ) : searchResults.length > 0 ? (
-                searchResults.map((movie) => (
-                  <View key={movie.id} style={styles.searchResultItem}>
-                    <Image
-                      source={{ uri: `${baseImagePath("w92", movie.poster_path)}` }}
-                      style={styles.searchResultPoster}
-                    />
-                    <View style={styles.searchResultInfo}>
-                      <Text style={styles.searchResultTitle} numberOfLines={2}>
-                        {movie.title}
-                      </Text>
-                      <Text style={styles.searchResultYear}>
-                        {movie.release_date ? new Date(movie.release_date).getFullYear() : "N/A"}
-                      </Text>
+                <FlatList
+                  style={styles.searchResultsList}
+                  data={searchResults}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
+                    <View style={styles.searchResultCard}>
+                      <Image
+                        source={{ uri: `${baseImagePath("w154", item.poster_path)}` }}
+                        style={styles.searchResultPoster}
+                      />
+                      <View style={styles.searchResultContent}>
+                        <Text style={styles.searchResultTitle} numberOfLines={2}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.searchResultDate}>
+                          {item.release_date ? new Date(item.release_date).getFullYear() : "N/A"} • {item.original_language?.toUpperCase() || 'N/A'}
+                        </Text>
+                        <View style={styles.searchResultMeta}>
+                          <Text style={styles.searchResultRating}>⭐ {item.vote_average?.toFixed(1) || 'N/A'}</Text>
+                          <TouchableOpacity
+                            style={styles.searchAddButton}
+                            onPress={() => handleAddMovie(item)}
+                          >
+                            <FontAwesome6 name="plus" size={14} color={COLORS.White} />
+                            <Text style={styles.searchAddButtonText}>Thêm</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     </View>
-                    <TouchableOpacity
-                      style={styles.addMovieButton}
-                      onPress={() => handleAddMovie(movie)}
-                    >
-                      <FontAwesome6 name="plus" size={18} color={COLORS.White} />
-                    </TouchableOpacity>
-                  </View>
-                ))
+                  )}
+                  showsVerticalScrollIndicator={false}
+                />
               ) : (
-                <View style={styles.noResultsContainer}>
+                <View style={styles.searchEmptyContainer}>
                   <MaterialCommunityIcons
-                    name="movie-search"
-                    size={60}
+                    name="movie-search-outline"
+                    size={isWeb ? 80 : 60}
                     color={COLORS.WhiteRGBA25}
                   />
-                  <Text style={styles.noResultsText}>
-                    {searchQuery ? "Không tìm thấy phim nào" : "Nhập tên phim để tìm kiếm"}
+                  <Text style={styles.searchEmptyTitle}>
+                    {searchQuery ? "Không tìm thấy phim nào" : "Bắt đầu tìm kiếm phim"}
+                  </Text>
+                  <Text style={styles.searchEmptySubtitle}>
+                    {searchQuery ? "Thử tìm với từ khóa khác" : "Nhập tên phim và nhấn tìm kiếm"}
                   </Text>
                 </View>
               )}
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
@@ -516,118 +545,162 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: SPACING.space_48,
   },
-  // Modal styles
-  modalOverlay: {
+  // Search Modal styles
+  searchModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.9)",
-    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: isWeb ? SPACING.space_32 : SPACING.space_16,
   },
-  modalContainer: {
+  searchModalContainer: {
+    width: isWeb ? "85%" : "100%",
+    maxWidth: isWeb ? 900 : undefined,
+    maxHeight: isWeb ? "85%" : "90%",
     backgroundColor: COLORS.Black,
-    borderTopLeftRadius: BORDER_RADIUS.radius_24,
-    borderTopRightRadius: BORDER_RADIUS.radius_24,
-    maxHeight: "90%",
+    borderRadius: BORDER_RADIUS.radius_20,
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
+    overflow: "hidden",
   },
-  modalHeader: {
+  searchModalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: SPACING.space_24,
+    padding: isWeb ? SPACING.space_24 : SPACING.space_20,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.WhiteRGBA15,
+    backgroundColor: COLORS.Black,
   },
-  modalTitle: {
+  searchModalTitle: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_18,
     color: COLORS.White,
+    flex: 1,
   },
-  searchContainer: {
+  searchCloseButton: {
+    padding: SPACING.space_8,
+    borderRadius: BORDER_RADIUS.radius_8,
+    backgroundColor: COLORS.WhiteRGBA10,
+  },
+  searchInputContainer: {
     flexDirection: "row",
-    padding: SPACING.space_16,
+    alignItems: "center",
+    margin: isWeb ? SPACING.space_24 : SPACING.space_20,
+    marginBottom: isWeb ? SPACING.space_20 : SPACING.space_16,
     gap: SPACING.space_12,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: COLORS.DarkGrey,
+    height: isWeb ? 52 : 48,
+    backgroundColor: COLORS.WhiteRGBA10,
     borderRadius: BORDER_RADIUS.radius_12,
-    padding: SPACING.space_16,
+    paddingHorizontal: SPACING.space_16,
     fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
+    fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
     borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA25,
+    borderColor: COLORS.WhiteRGBA15,
   },
-  searchButton: {
+  searchSubmitButton: {
+    width: isWeb ? 52 : 48,
+    height: isWeb ? 52 : 48,
     backgroundColor: COLORS.Orange,
     borderRadius: BORDER_RADIUS.radius_12,
-    padding: SPACING.space_16,
-    justifyContent: "center",
     alignItems: "center",
-    width: 56,
+    justifyContent: "center",
   },
-  searchResults: {
+  searchResultsContainer: {
     flex: 1,
-    padding: SPACING.space_16,
+    paddingHorizontal: isWeb ? SPACING.space_24 : SPACING.space_20,
+    paddingBottom: isWeb ? SPACING.space_24 : SPACING.space_20,
   },
-  searchingContainer: {
-    padding: SPACING.space_48,
+  searchLoadingContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: SPACING.space_16,
   },
-  searchingText: {
+  searchLoadingText: {
     fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
-    marginTop: SPACING.space_12,
+    fontSize: FONT_SIZE.size_16,
+    color: COLORS.WhiteRGBA75,
   },
-  searchResultItem: {
+  searchResultsList: {
+    flex: 1,
+  },
+  searchResultCard: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.DarkGrey,
+    backgroundColor: COLORS.WhiteRGBA5,
     borderRadius: BORDER_RADIUS.radius_12,
     padding: SPACING.space_12,
     marginBottom: SPACING.space_12,
     borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA15,
+    borderColor: COLORS.WhiteRGBA10,
   },
   searchResultPoster: {
-    width: 60,
-    height: 90,
+    width: isWeb ? 80 : 60,
+    height: isWeb ? 120 : 90,
     borderRadius: BORDER_RADIUS.radius_8,
     backgroundColor: COLORS.WhiteRGBA10,
   },
-  searchResultInfo: {
+  searchResultContent: {
     flex: 1,
     marginLeft: SPACING.space_12,
+    justifyContent: "space-between",
   },
   searchResultTitle: {
     fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_14,
+    fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
     marginBottom: SPACING.space_4,
   },
-  searchResultYear: {
+  searchResultDate: {
     fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_12,
+    fontSize: FONT_SIZE.size_14,
     color: COLORS.WhiteRGBA75,
+    marginBottom: SPACING.space_8,
   },
-  addMovieButton: {
-    backgroundColor: COLORS.Orange,
+  searchResultMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  searchResultRating: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.Orange,
+  },
+  searchAddButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.Green,
+    paddingHorizontal: SPACING.space_12,
+    paddingVertical: SPACING.space_8,
     borderRadius: BORDER_RADIUS.radius_8,
-    padding: SPACING.space_12,
+    gap: SPACING.space_8,
   },
-  noResultsContainer: {
-    padding: SPACING.space_48,
+  searchAddButtonText: {
+    fontFamily: FONT_FAMILY.poppins_medium,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.White,
+  },
+  searchEmptyContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: SPACING.space_16,
   },
-  noResultsText: {
+  searchEmptyTitle: {
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_18,
+    color: COLORS.White,
+    textAlign: "center",
+  },
+  searchEmptySubtitle: {
     fontFamily: FONT_FAMILY.poppins_regular,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.WhiteRGBA50,
-    marginTop: SPACING.space_16,
     textAlign: "center",
   },
   columnWrapper:{

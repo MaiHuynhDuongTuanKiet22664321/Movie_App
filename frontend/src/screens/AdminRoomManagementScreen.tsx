@@ -9,7 +9,11 @@ import {
   RefreshControl,
   Alert,
   Modal,
+  Dimensions,
 } from "react-native";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const isWeb = SCREEN_WIDTH > 768;
 import {
   BORDER_RADIUS,
   COLORS,
@@ -512,7 +516,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   seatModalContainer: {
-    width: "95%",
+    width: isWeb ? "80%" : "95%",
+    maxWidth: isWeb ? 900 : undefined,
     maxHeight: "90%",
     backgroundColor: COLORS.Black,
     borderRadius: BORDER_RADIUS.radius_20,

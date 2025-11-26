@@ -13,7 +13,8 @@ import {
   Platform,
 } from "react-native";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const isWeb = Platform.OS === 'web';
 import {
   BORDER_RADIUS,
   COLORS,
@@ -241,9 +242,9 @@ const styles = StyleSheet.create({
     padding: SPACING.space_16,
   },
   modalContainer: {
-    width: "100%",
-    maxWidth: 500,
-    maxHeight: SCREEN_HEIGHT * 0.85,
+    width: isWeb ? "85%" : "100%",
+    maxWidth: isWeb ? 900 : 500,
+    maxHeight: SCREEN_HEIGHT * 0.9,
     backgroundColor: COLORS.Black,
     borderRadius: BORDER_RADIUS.radius_20,
     borderWidth: 1,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: SPACING.space_20,
+    padding: isWeb ? SPACING.space_32 : SPACING.space_20,
   },
   formGroup: {
     marginBottom: SPACING.space_20,
