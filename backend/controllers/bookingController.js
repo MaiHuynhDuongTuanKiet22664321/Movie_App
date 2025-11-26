@@ -281,14 +281,19 @@ export const checkPayment = async (req, res) => {
       const transactionDate = new Date(trans.transaction_date).getTime();
       const isRecent = transactionDate > thirtyMinutesAgo;
       const amountMatch = parseFloat(trans.amount_in) >= totalPrice;
-      const contentMatch = trans.transaction_content?.includes(orderCode);
-      const accountMatch = trans.to_account === SEPAY_BANK_ACCOUNT;
+      // Relax content matching - case insensitive and partial match
+      const contentMatch = trans.transaction_content?.toUpperCase().includes(orderCode.toUpperCase());
+      // Fix: SePay returns account_number, not to_account
+      const transAccount = trans.account_number || trans.to_account;
+      const normalizedTransAccount = transAccount?.replace(/^0+/, '');
+      const normalizedBankAccount = SEPAY_BANK_ACCOUNT?.replace(/^0+/, '');
+      const accountMatch = normalizedTransAccount === normalizedBankAccount || transAccount === SEPAY_BANK_ACCOUNT;
       
-      console.log('🏦 [SePay Backend] Transaction check:', {
+      console.log(' [SePay Backend] Transaction check:', {
         id: trans.id,
         amount: trans.amount_in,
         content: trans.transaction_content,
-        account: trans.to_account,
+        account: transAccount,
         date: trans.transaction_date,
         isRecent,
         amountMatch,
