@@ -45,6 +45,9 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
+    console.log('🔍 Attempting login to:', AUTH_ENDPOINTS.LOGIN);
+    console.log('🔍 Credentials:', { email: credentials.email, password: '***' });
+    
     const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
       method: 'POST',
       headers: {
@@ -53,7 +56,11 @@ export const loginUser = async (credentials: {
       body: JSON.stringify(credentials),
     });
 
+    console.log('🔍 Response status:', response.status);
+    console.log('🔍 Response ok:', response.ok);
+
     const data = await response.json();
+    console.log('🔍 Response data:', data);
 
     if (!response.ok) {
       throw new Error(data.message || 'Đăng nhập thất bại');
@@ -62,6 +69,7 @@ export const loginUser = async (credentials: {
     return data;
   } catch (error: any) {
     console.error('Login Error:', error);
+    console.error('Error details:', error.message);
     throw new Error(error.message || 'Không thể kết nối đến server');
   }
 };
