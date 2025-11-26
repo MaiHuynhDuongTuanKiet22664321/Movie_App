@@ -13,10 +13,10 @@ import {
   RefreshControl,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import AppHeader from "../components/MovieDetailsHeader";
-import SettingComponent from "../components/SettingComponent";
-import { useUser } from "../context/UserContext";
-import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../theme/theme";
+import AppHeader from "../../components/MovieDetailsHeader";
+import SettingComponent from "../../components/SettingComponent";
+import { useUser } from "../../context/UserContext";
+import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from "../../theme/theme";
 
 const UserAccountScreen = ({ navigation }: any) => {
   const { user, logout } = useUser();

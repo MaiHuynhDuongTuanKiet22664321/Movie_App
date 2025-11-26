@@ -21,9 +21,9 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import { movieApi, scheduleApi } from "../api/adminApi";
-import { searchMovies, movieDetails, baseImagePath } from "../api/apicall";
+} from "../../theme/theme";
+import { movieApi, scheduleApi } from "../../api/adminApi";
+import { searchMovies, movieDetails, baseImagePath } from "../../api/apicall";
 
 const isWeb = Platform.OS === 'web';
 

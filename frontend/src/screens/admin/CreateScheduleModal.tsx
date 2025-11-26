@@ -21,11 +21,11 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import { scheduleApi, roomApi, movieApi } from "../api/adminApi";
+} from "../../theme/theme";
+import { scheduleApi, roomApi, movieApi } from "../../api/adminApi";
 import { X, Film, ChevronDown, DoorOpen, Calendar as CalendarIcon, Clock, Check, CheckCircle, XCircle } from "lucide-react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import InfoDialog from "../components/InfoDialog";
+import InfoDialog from "../../components/InfoDialog";
 
 // Configure Vietnamese locale
 LocaleConfig.locales["vi"] = {

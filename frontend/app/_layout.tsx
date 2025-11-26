@@ -1,16 +1,17 @@
 import { UserProvider, useUser } from '../src/context/UserContext';
 import TabNavigator from '../src/navigators/TabNavigator';
-import AuthScreen from '../src/screens/AuthScreen';
-import EditProfileScreen from '../src/screens/EditProfileScreen';
-import MovieDetailScreen from '../src/screens/MovieDetailScreen';
-import MovieScheduleScreen from '../src/screens/MovieScheduleScreen';
-import PaymentScreen from '../src/screens/PaymentScreen';
-import SeatBookingScreen from '../src/screens/SeatBookingScreen';
+import AuthScreen from '../src/screens/auth/AuthScreen';
+import EditProfileScreen from '../src/screens/profile/EditProfileScreen';
+import MovieDetailScreen from '../src/screens/user/MovieDetailScreen';
+import MovieScheduleScreen from '../src/screens/user/MovieScheduleScreen';
+import PaymentScreen from '../src/screens/user/PaymentScreen';
+import SeatBookingScreen from '../src/screens/user/SeatBookingScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AdminMovieManagementScreen from '../src/screens/AdminMovieManagementScreen';
-import AdminAddMovieScreen from '../src/screens/AdminAddMovieScreen';
-import AdminAddRoomScreen from '../src/screens/AdminAddRoomScreen';
-import AdminRoomManagementScreen from '../src/screens/AdminRoomManagementScreen';
+import AdminMovieManagementScreen from '../src/screens/admin/AdminMovieManagementScreen';
+import AdminAddMovieScreen from '../src/screens/admin/AdminAddMovieScreen';
+import AdminAddRoomScreen from '../src/screens/admin/AdminAddRoomScreen';
+import AdminRoomManagementScreen from '../src/screens/admin/AdminRoomManagementScreen';
+import AdminCreateScheduleScreen from '../src/screens/admin/AdminCreateScheduleScreen';
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
@@ -86,6 +87,11 @@ const AppNavigator = () => {
       <Stack.Screen
         name="AdminRoomManagement"
         component={AdminRoomManagementScreen}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="AdminCreateSchedule"
+        component={AdminCreateScheduleScreen}
         options={{ animation: "slide_from_right" }}
       />
     </Stack.Navigator>

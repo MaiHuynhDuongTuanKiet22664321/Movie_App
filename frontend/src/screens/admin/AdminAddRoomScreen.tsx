@@ -16,10 +16,10 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { roomApi } from "../api/adminApi";
+import { roomApi } from "../../api/adminApi";
 
 const ROOM_SIZES = [
   { id: "small", label: "Phòng nhỏ", seats: 24, desc: "4 hàng x 6 ghế", icon: "door-closed", color: COLORS.Green },

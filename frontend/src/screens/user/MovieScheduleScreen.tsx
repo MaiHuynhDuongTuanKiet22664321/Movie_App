@@ -29,8 +29,8 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   BORDER_RADIUS,
-} from "../theme/theme";
-import { scheduleApi } from "../api/adminApi";
+} from "../../theme/theme";
+import { scheduleApi } from "../../api/adminApi";
 
 const { width } = Dimensions.get("window");
 

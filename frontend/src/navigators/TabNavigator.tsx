@@ -10,13 +10,13 @@ import {
   UserCircle,
   Clapperboard 
 } from "lucide-react-native";
-import HomeScreen from "../screens/HomeScreen";
-import SearchScreen from "../screens/SearchScreen";
-import TicketScreen from "../screens/TicketScreen";
-import UserAccountScreen from "../screens/UserAccountScreen";
-import AdminScheduleListScreen from "../screens/AdminScheduleListScreen";
-import AdminRoomManagementScreen from "../screens/AdminRoomManagementScreen";
-import AdminMovieManagementScreen from "../screens/AdminMovieManagementScreen";
+import HomeScreen from "../screens/user/HomeScreen";
+import SearchScreen from "../screens/user/SearchScreen";
+import TicketScreen from "../screens/user/TicketScreen";
+import UserAccountScreen from "../screens/profile/UserAccountScreen";
+import AdminScheduleListScreen from "../screens/admin/AdminScheduleListScreen";
+import AdminRoomManagementScreen from "../screens/admin/AdminRoomManagementScreen";
+import AdminMovieManagementScreen from "../screens/admin/AdminMovieManagementScreen";
 import { COLORS, FONT_SIZE, SPACING } from "../theme/theme";
 import { useUser } from "../context/UserContext";
 

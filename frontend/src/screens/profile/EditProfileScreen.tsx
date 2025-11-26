@@ -14,11 +14,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { updateUserProfile } from '../service/auth.service';
-import { useUser } from '../context/UserContext';
-import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '../theme/theme';
+import { updateUserProfile } from '../../service/auth.service';
+import { useUser } from "../../context/UserContext";
+import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '../../theme/theme';
 import Toast from 'react-native-toast-message';
-import AppHeader from '../components/MovieDetailsHeader';
+import AppHeader from '../../components/MovieDetailsHeader';
 
 const EditProfileScreen = ({ navigation }: any) => {
   const { user, token, setUser } = useUser();

@@ -9,10 +9,10 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
-import { COLORS, SPACING, FONT_FAMILY, FONT_SIZE, BORDER_RADIUS } from "../theme/theme";
-import { baseImagePath, searchMovies } from "../api/apicall";
+import { COLORS, SPACING, FONT_FAMILY, FONT_SIZE, BORDER_RADIUS } from "../../theme/theme";
+import { baseImagePath, searchMovies } from "../../api/apicall";
 import { useState, useEffect } from "react";
-import InputHeader from "../components/InputHeader";
+import InputHeader from "../../components/InputHeader";
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import React from "react";

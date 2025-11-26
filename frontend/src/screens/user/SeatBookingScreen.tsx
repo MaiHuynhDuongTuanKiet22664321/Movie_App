@@ -17,7 +17,7 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   BORDER_RADIUS,
-} from "../theme/theme";
+} from "../../theme/theme";
 import { JSX } from "react/jsx-runtime";
 
 const SeatBookingScreen = ({ navigation, route }: any) => {
@@ -36,8 +36,8 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
 
   const fetchSeats = async () => {
     try {
-      const { roomApi } = await import("../api/adminApi");
-      const { bookingApi } = await import("../api/bookingApi");
+      const { roomApi } = await import("../../api/adminApi");
+      const { bookingApi } = await import("../../api/bookingApi");
       
       // Fetch room seats
       const roomResult = await roomApi.getById(schedule.room._id);

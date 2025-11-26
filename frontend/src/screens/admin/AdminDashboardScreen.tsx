@@ -13,7 +13,7 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AdminScheduleListScreen from "./AdminScheduleListScreen";
 import AdminRoomManagementScreen from "./AdminRoomManagementScreen";

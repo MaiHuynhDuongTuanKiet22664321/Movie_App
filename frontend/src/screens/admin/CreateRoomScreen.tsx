@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const isSmallScreen = SCREEN_WIDTH < 380;
 const isWeb = Platform.OS === 'web';
 import {
   BORDER_RADIUS,
@@ -21,22 +22,21 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import { roomApi } from "../api/adminApi";
-import { X, CheckCircle, XCircle, Check } from "lucide-react-native";
-import SeatMapPreview, { RoomSize, ROOM_CONFIGS } from "../components/SeatMapPreview";
-import InfoDialog from "../components/InfoDialog";
+} from "../../theme/theme";
+import { roomApi } from "../../api/adminApi";
+import { X, Armchair, Plus } from "lucide-react-native";
+import SeatMapPreview, { RoomSize, ROOM_CONFIGS } from "../../components/SeatMapPreview";
+import InfoDialog from "../../components/InfoDialog";
 
-interface EditRoomModalProps {
+interface CreateRoomModalProps {
   visible: boolean;
-  room: any;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, onSuccess }) => {
-  const [name, setName] = useState(room?.name || "");
-  const [status, setStatus] = useState(room?.status || "active");
+const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ visible, onClose, onSuccess }) => {
+  const [name, setName] = useState("");
+  const [selectedSize, setSelectedSize] = useState<RoomSize>(RoomSize.MEDIUM);
   const [loading, setLoading] = useState(false);
   const [infoDialog, setInfoDialog] = useState<{
     visible: boolean;
@@ -54,15 +54,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
     setInfoDialog({ visible: true, type, title, message });
   };
 
-  // Determine room size based on seat count
-  const getRoomSize = (): RoomSize => {
-    const seatCount = room?.sodoghe?.length || 0;
-    if (seatCount <= 48) return RoomSize.SMALL;
-    if (seatCount <= 80) return RoomSize.MEDIUM;
-    return RoomSize.LARGE;
-  };
-
-  const handleUpdate = async () => {
+  const handleCreate = async () => {
     // Validate room name
     if (!name.trim()) {
       showInfo("error", "Lỗi", "Vui lòng nhập tên phòng");
@@ -79,31 +71,40 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
       return;
     }
 
+    // Validate room size
+    if (!selectedSize) {
+      showInfo("error", "Lỗi", "Vui lòng chọn kích thước phòng");
+      return;
+    }
+
+    const config = ROOM_CONFIGS[selectedSize];
+
     setLoading(true);
     try {
-      const result = await roomApi.update(room._id, {
+      const result = await roomApi.create({
         name: name.trim(),
-        status,
+        rowCount: config.rows,
+        seatsPerRow: config.seatsPerRow,
       });
 
       if (result.success) {
-        showInfo("success", "Thành công", "Đã cập nhật phòng chiếu");
+        showInfo("success", "Thành công", "Đã tạo phòng chiếu mới");
+        setName("");
+        setSelectedSize(RoomSize.MEDIUM);
         setTimeout(() => {
           onSuccess();
           onClose();
         }, 1500);
       } else {
-        showInfo("error", "Lỗi", result.message || "Không thể cập nhật phòng chiếu");
+        showInfo("error", "Lỗi", result.message || "Không thể tạo phòng chiếu");
       }
     } catch (error) {
-      console.error("Error updating room:", error);
-      showInfo("error", "Lỗi", "Không thể cập nhật phòng chiếu");
+      console.error("Error creating room:", error);
+      showInfo("error", "Lỗi", "Không thể tạo phòng chiếu");
     } finally {
       setLoading(false);
     }
   };
-
-  if (!room) return null;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -114,7 +115,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Chỉnh sửa phòng chiếu</Text>
+            <Text style={styles.headerTitle}>Tạo phòng chiếu mới</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={COLORS.White} />
             </TouchableOpacity>
@@ -126,71 +127,72 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
               <Text style={styles.label}>Tên phòng *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Tên phòng"
+                placeholder="Ví dụ: Phòng VIP 1, Phòng Standard..."
                 placeholderTextColor={COLORS.WhiteRGBA50}
                 value={name}
                 onChangeText={setName}
               />
             </View>
 
-            {/* Status Selection */}
+            {/* Room Size Selection */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Trạng thái *</Text>
-              <View style={styles.statusContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.statusButton,
-                    status === "active" && styles.statusButtonActive,
-                  ]}
-                  onPress={() => setStatus("active")}
-                >
-                  <CheckCircle
-                    size={20}
-                    color={status === "active" ? COLORS.Green : COLORS.WhiteRGBA50}
-                  />
-                  <Text
+              <Text style={styles.label}>Kích thước phòng *</Text>
+              <View style={styles.sizeContainer}>
+                {Object.entries(ROOM_CONFIGS).map(([key, config]) => (
+                  <TouchableOpacity
+                    key={key}
                     style={[
-                      styles.statusButtonText,
-                      status === "active" && styles.statusButtonTextActive,
+                      styles.sizeButton,
+                      selectedSize === key && styles.sizeButtonActive,
                     ]}
+                    onPress={() => setSelectedSize(key as RoomSize)}
                   >
-                    Hoạt động
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.statusButton,
-                    status === "inactive" && styles.statusButtonInactive,
-                  ]}
-                  onPress={() => setStatus("inactive")}
-                >
-                  <XCircle
-                    size={20}
-                    color={status === "inactive" ? COLORS.Red : COLORS.WhiteRGBA50}
-                  />
-                  <Text
-                    style={[
-                      styles.statusButtonText,
-                      status === "inactive" && styles.statusButtonTextActive,
-                    ]}
-                  >
-                    Tạm ngừng
-                  </Text>
-                </TouchableOpacity>
+                    <View style={styles.sizeHeader}>
+                      <Armchair
+                        size={24}
+                        color={selectedSize === key ? COLORS.Orange : COLORS.WhiteRGBA50}
+                      />
+                      <Text
+                        style={[
+                          styles.sizeName,
+                          selectedSize === key && styles.sizeNameActive,
+                        ]}
+                      >
+                        {config.name}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.sizeDesc,
+                        selectedSize === key && styles.sizeDescActive,
+                      ]}
+                    >
+                      {config.description}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
-            {/* Room Info */}
-            <View style={styles.roomInfoBox}>
-              <Text style={styles.roomInfoTitle}>Thông tin phòng</Text>
-              <View style={styles.roomInfoRow}>
-                <Text style={styles.roomInfoLabel}>Tổng số ghế:</Text>
-                <Text style={styles.roomInfoValue}>{room.sodoghe?.length || 0} ghế</Text>
+            {/* Preview */}
+            <View style={styles.previewSection}>
+              <Text style={styles.label}>Xem trước sơ đồ ghế</Text>
+              <View style={styles.previewContainer}>
+                <SeatMapPreview roomSize={selectedSize} compact={false} showLabels />
+              </View>
+              
+              {/* Giải thích */}
+              <View style={styles.infoBox}>
+                <View style={styles.infoRow}>
+                  <Armchair size={18} color={COLORS.Yellow} />
+                  <Text style={styles.infoText}>Hàng A: Ghế VIP (màu vàng)</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Armchair size={18} color={COLORS.WhiteRGBA50} />
+                  <Text style={styles.infoText}>Các hàng còn lại: Ghế thường</Text>
+                </View>
               </View>
             </View>
-
-
 
             {/* Action Buttons */}
             <View style={styles.actions}>
@@ -203,16 +205,16 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ visible, room, onClose, o
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.button, styles.updateButton, loading && styles.buttonDisabled]}
-                onPress={handleUpdate}
+                style={[styles.button, styles.createButton, loading && styles.buttonDisabled]}
+                onPress={handleCreate}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color={COLORS.White} />
                 ) : (
                   <>
-                    <Check size={16} color={COLORS.White} />
-                    <Text style={styles.updateButtonText}>Cập nhật</Text>
+                    <Plus size={16} color={COLORS.White} />
+                    <Text style={styles.createButtonText}>Tạo phòng</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -291,37 +293,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA25,
   },
-  statusContainer: {
-    flexDirection: "row",
+  sizeContainer: {
     gap: SPACING.space_12,
   },
-  statusButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.space_8,
-    padding: SPACING.space_16,
-    borderRadius: BORDER_RADIUS.radius_12,
+  sizeButton: {
     backgroundColor: COLORS.DarkGrey,
+    borderRadius: BORDER_RADIUS.radius_12,
+    padding: SPACING.space_16,
     borderWidth: 2,
     borderColor: COLORS.WhiteRGBA15,
   },
-  statusButtonActive: {
-    borderColor: COLORS.Green,
-    backgroundColor: COLORS.Green + "20",
+  sizeButtonActive: {
+    borderColor: COLORS.Orange,
+    backgroundColor: COLORS.OrangeRGBBA0,
   },
-  statusButtonInactive: {
-    borderColor: COLORS.Red,
-    backgroundColor: COLORS.Red + "20",
+  sizeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.space_12,
+    marginBottom: SPACING.space_8,
   },
-  statusButtonText: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_14,
+  sizeName: {
+    fontFamily: FONT_FAMILY.poppins_semibold,
+    fontSize: FONT_SIZE.size_16,
+    color: COLORS.WhiteRGBA75,
+  },
+  sizeNameActive: {
+    color: COLORS.White,
+  },
+  sizeDesc: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_12,
     color: COLORS.WhiteRGBA50,
   },
-  statusButtonTextActive: {
-    color: COLORS.White,
+  sizeDescActive: {
+    color: COLORS.WhiteRGBA75,
   },
   previewSection: {
     marginBottom: SPACING.space_20,
@@ -333,33 +339,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
     marginBottom: SPACING.space_12,
-  },
-  roomInfoBox: {
-    backgroundColor: COLORS.WhiteRGBA10,
-    borderRadius: BORDER_RADIUS.radius_12,
-    padding: SPACING.space_16,
-    marginBottom: SPACING.space_20,
-  },
-  roomInfoTitle: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
-    marginBottom: SPACING.space_12,
-  },
-  roomInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: SPACING.space_8,
-  },
-  roomInfoLabel: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.WhiteRGBA75,
-  },
-  roomInfoValue: {
-    fontFamily: FONT_FAMILY.poppins_medium,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
   },
   infoBox: {
     backgroundColor: COLORS.WhiteRGBA10,
@@ -401,10 +380,10 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
   },
-  updateButton: {
+  createButton: {
     backgroundColor: COLORS.Orange,
   },
-  updateButtonText: {
+  createButtonText: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
@@ -414,4 +393,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditRoomModal;
+export default CreateRoomModal;

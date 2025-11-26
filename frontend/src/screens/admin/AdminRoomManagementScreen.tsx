@@ -16,12 +16,12 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { roomApi } from "../api/adminApi";
+import { roomApi } from "../../api/adminApi";
 import EditRoomModal from "./EditRoomScreen"; 
-import ConfirmDialog from "../components/ConfirmDialog";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 type RootStackParamList = {
   AdminAddRoom: undefined;

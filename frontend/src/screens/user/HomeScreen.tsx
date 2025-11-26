@@ -9,18 +9,18 @@ import {
   Text,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { COLORS, SPACING, FONT_SIZE, FONT_FAMILY } from "../theme/theme";
+import { COLORS, SPACING, FONT_SIZE, FONT_FAMILY } from "../../theme/theme";
 import {
   upComingMovie,
   nowPlayingMovie,
   popularMovie,
   baseImagePath,
-} from "../api/apicall";
-import InputHeader from "../components/InputHeader";
-import CategogyHeader from "../components/CategogyHeader";
-import SubMoviesCard from "../components/SubMoviesCard";
-import MoviesCard from "../components/MoviesCard";
-import { fetchAllMovies } from "../service/movie.service";
+} from "../../api/apicall";
+import InputHeader from "../../components/InputHeader";
+import CategogyHeader from "../../components/CategogyHeader";
+import SubMoviesCard from "../../components/SubMoviesCard";
+import MoviesCard from "../../components/MoviesCard";
+import { fetchAllMovies } from "../../service/movie.service";
 import { Search } from "lucide-react-native";
 import React from "react";
 

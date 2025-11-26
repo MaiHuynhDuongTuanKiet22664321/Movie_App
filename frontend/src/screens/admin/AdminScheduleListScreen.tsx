@@ -8,26 +8,27 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  StatusBar,
+  SafeAreaView,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   BORDER_RADIUS,
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { scheduleApi } from "../api/adminApi";
+import { scheduleApi } from "../../api/adminApi";
 import EditScheduleModal from "./EditScheduleModal";
-import CreateScheduleModal from "./CreateScheduleModal";
-import ConfirmDialog from "../components/ConfirmDialog";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
-const AdminScheduleListScreen = () => {
+const AdminScheduleListScreen = ({ navigation }: any) => {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [deletingSchedule, setDeletingSchedule] = useState<any>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -47,9 +48,11 @@ const AdminScheduleListScreen = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -192,7 +195,8 @@ const AdminScheduleListScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
       {/* Header */}
       <View style={styles.header}>
         <MaterialCommunityIcons name="calendar-clock" size={32} color={COLORS.Orange} />
@@ -220,7 +224,7 @@ const AdminScheduleListScreen = () => {
             />
             <Text style={styles.emptyTitle}>Chưa có lịch chiếu</Text>
             <Text style={styles.emptySubtitle}>
-              Chưa có lịch chiếu nào trong hệ thống
+              Nhấn nút + để tạo lịch chiếu đầu tiên
             </Text>
           </View>
         ) : (
@@ -228,11 +232,6 @@ const AdminScheduleListScreen = () => {
         )}
       </ScrollView>
 
-      <CreateScheduleModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={fetchData}
-      />
 
       {editingSchedule && (
         <EditScheduleModal
@@ -258,12 +257,12 @@ const AdminScheduleListScreen = () => {
       {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setShowCreateModal(true)}
+        onPress={() => navigation.navigate('AdminCreateSchedule')}
         activeOpacity={0.8}
       >
         <FontAwesome6 name="plus" size={20} color={COLORS.White} />
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -271,7 +270,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.Black,
-    paddingTop: SPACING.space_36,
   },
   header: {
     flexDirection: "row",

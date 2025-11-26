@@ -38,10 +38,10 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { useUser } from "../context/UserContext";
-import AdminScheduleManagementScreen from "./AdminScheduleManagementScreen";
+import { useUser } from "../../context/UserContext";
+import AdminScheduleManagementScreen from "../admin/AdminScheduleManagementScreen";
 import QRCode from "react-native-qrcode-svg";
 
 const TicketScreen = ({ navigation, route }: any) => {
@@ -79,7 +79,7 @@ const TicketScreen = ({ navigation, route }: any) => {
   const loadUserTickets = async () => {
     try {
       setRefreshing(true);
-      const { bookingApi } = await import("../api/bookingApi");
+      const { bookingApi } = await import("../../api/bookingApi");
       const result = await bookingApi.getUserTickets();
       if (result.success && Array.isArray(result.data)) {
         const formatted = result.data.map((ticket: any) =>

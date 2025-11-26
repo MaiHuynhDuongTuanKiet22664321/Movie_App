@@ -3,29 +3,31 @@ import {
   Text,
   View,
   StyleSheet,
-  Modal,
   TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   FlatList,
   Dimensions,
+  KeyboardAvoidingView,
   Platform,
+  StatusBar,
+  SafeAreaView,
+  Modal,
 } from "react-native";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const isWeb = Platform.OS === 'web';
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 import {
   BORDER_RADIUS,
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import { scheduleApi, roomApi } from "../api/adminApi";
+} from "../../theme/theme";
+import { scheduleApi, roomApi, movieApi } from "../../api/adminApi";
 import { X, Film, ChevronDown, DoorOpen, Calendar as CalendarIcon, Clock, Check, CheckCircle, XCircle } from "lucide-react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import InfoDialog from "../components/InfoDialog";
+import InfoDialog from "../../components/InfoDialog";
 
 // Configure Vietnamese locale
 LocaleConfig.locales["vi"] = {
@@ -50,11 +52,8 @@ LocaleConfig.locales["vi"] = {
 };
 LocaleConfig.defaultLocale = "vi";
 
-interface EditScheduleModalProps {
-  visible: boolean;
-  schedule: any;
-  onClose: () => void;
-  onSuccess: () => void;
+interface AdminCreateScheduleScreenProps {
+  navigation: any;
 }
 
 // Time slots: 8 ca mỗi ca 3 tiếng - Sắp xếp từ 00:00 đến 24:00
@@ -69,22 +68,20 @@ const TIME_SLOTS = [
   { time: "21:00", range: "21:00 - 00:00" },
 ];
 
-const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
-  visible,
-  schedule,
-  onClose,
-  onSuccess,
+const AdminCreateScheduleScreen: React.FC<AdminCreateScheduleScreenProps> = ({
+  navigation,
 }) => {
+  const [movies, setMovies] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [allSchedules, setAllSchedules] = useState<any[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState(schedule?.room?._id || "");
-  const [date, setDate] = useState(
-    schedule?.date ? new Date(schedule.date).toISOString().split("T")[0] : ""
-  );
-  const [time, setTime] = useState(schedule?.time || "");
-  const [basePrice, setBasePrice] = useState(schedule?.basePrice?.toString() || "75000");
+  const [selectedMovie, setSelectedMovie] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [basePrice, setBasePrice] = useState("75000");
   const [loading, setLoading] = useState(false);
-  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
+  const [showMoviePicker, setShowMoviePicker] = useState(false);
   const [showRoomPicker, setShowRoomPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -101,58 +98,55 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
   });
 
   useEffect(() => {
-    if (visible) {
-      fetchRooms();
-      fetchAllSchedules();
-    }
-  }, [visible]);
+    fetchData();
+  }, []);
 
-  const fetchRooms = async () => {
+  const fetchData = async () => {
     try {
-      const result = await roomApi.getAll();
-      if (result.success) {
-        setRooms(result.data.filter((r: any) => r.status === "active"));
+      const [moviesRes, roomsRes, schedulesRes] = await Promise.all([
+        movieApi.getAll(),
+        roomApi.getAll(),
+        scheduleApi.getAll(),
+      ]);
+
+      if (moviesRes.success) {
+        setMovies(moviesRes.data.filter((m: any) => m.status === "active"));
+      }
+
+      if (roomsRes.success) {
+        setRooms(roomsRes.data.filter((r: any) => r.status === "active"));
+      }
+
+      if (schedulesRes.success) {
+        setAllSchedules(schedulesRes.data);
       }
     } catch (error) {
-      console.error("Error fetching rooms:", error);
+      // Error fetching data
     } finally {
-      setLoadingRooms(false);
+      setLoadingData(false);
     }
   };
 
-  const fetchAllSchedules = async () => {
-    try {
-      const result = await scheduleApi.getAll();
-      if (result.success) {
-        setAllSchedules(result.data);
-      }
-    } catch (error) {
-      console.error("Error fetching schedules:", error);
-    }
+  // Get min date (2 days from now)
+  const getMinDate = () => {
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + 2);
+    return minDate.toISOString().split("T")[0];
   };
 
-  // Generate next 30 days from today
-  const getAvailableDates = () => {
-    const dates = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date.toISOString().split("T")[0]);
-    }
-    return dates;
+  // Get max date (30 days from now)
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    return maxDate.toISOString().split("T")[0];
   };
 
   // Check if time slot is available
   const isTimeSlotAvailable = (timeSlot: string) => {
     if (!selectedRoom || !date) return true;
     
-    // Kiểm tra xem có lịch nào trùng phòng, ngày, giờ không (trừ lịch hiện tại)
     return !allSchedules.some(
       (s) =>
-        s._id !== schedule._id && // Không tính lịch hiện tại
         s.room?._id === selectedRoom &&
         new Date(s.date).toISOString().split("T")[0] === date &&
         s.time === timeSlot
@@ -166,23 +160,17 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
     }));
   };
 
-  // Get min date (today)
-  const getMinDate = () => {
-    return new Date().toISOString().split("T")[0];
-  };
-
-  // Get max date (30 days from now)
-  const getMaxDate = () => {
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-    return maxDate.toISOString().split("T")[0];
-  };
-
   const showInfo = (type: "success" | "error" | "warning" | "info", title: string, message: string) => {
     setInfoDialog({ visible: true, type, title, message });
   };
 
-  const handleUpdate = async () => {
+  const handleCreate = async () => {
+    // Validate movie
+    if (!selectedMovie) {
+      showInfo("error", "Lỗi", "Vui lòng chọn phim");
+      return;
+    }
+
     // Validate room
     if (!selectedRoom) {
       showInfo("error", "Lỗi", "Vui lòng chọn phòng chiếu");
@@ -225,153 +213,214 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
 
     setLoading(true);
     try {
-      // Auto-calculate status based on date and time
-      const scheduleDateTime = new Date(`${date}T${time}`);
-      const now = new Date();
-      const status = scheduleDateTime < now ? "completed" : "scheduled";
-
-      const result = await scheduleApi.update(schedule._id, {
+      const result = await scheduleApi.create({
+        movie: selectedMovie,
         room: selectedRoom,
         date,
         time,
         basePrice: price,
-        status,
+        status: "scheduled",
       });
 
       if (result.success) {
-        showInfo("success", "Thành công", "Đã cập nhật lịch chiếu");
+        showInfo("success", "Thành công", "Đã tạo lịch chiếu mới");
         setTimeout(() => {
-          onSuccess();
-          onClose();
+          navigation.goBack();
         }, 1500);
       } else {
-        showInfo("error", "Lỗi", result.message || "Không thể cập nhật lịch chiếu");
+        showInfo("error", "Lỗi", result.message || "Không thể tạo lịch chiếu");
       }
     } catch (error) {
-      console.error("Error updating schedule:", error);
-      showInfo("error", "Lỗi", "Không thể cập nhật lịch chiếu");
+      showInfo("error", "Lỗi", "Không thể tạo lịch chiếu");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!schedule) return null;
+  if (loadingData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.Orange} />
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Chỉnh sửa lịch chiếu</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color={COLORS.White} />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.Black} />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardContainer}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <X size={24} color={COLORS.White} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Tạo lịch chiếu mới</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Movie Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Phim *</Text>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={() => setShowMoviePicker(true)}
+            >
+              <Film size={20} color={COLORS.WhiteRGBA75} />
+              <Text style={styles.selectButtonText}>
+                {movies.find((m) => m._id === selectedMovie)?.title || "Chọn phim..."}
+              </Text>
+              <ChevronDown size={14} color={COLORS.WhiteRGBA50} />
             </TouchableOpacity>
           </View>
 
-          {loadingRooms ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={COLORS.Orange} />
-            </View>
-          ) : (
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-              {/* Movie Info */}
-              <View style={styles.movieInfo}>
-                <Film size={24} color={COLORS.Orange} />
-                <Text style={styles.movieTitle}>{schedule.movie?.title}</Text>
-              </View>
+          {/* Room Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Phòng chiếu *</Text>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={() => setShowRoomPicker(true)}
+            >
+              <DoorOpen size={20} color={COLORS.WhiteRGBA75} />
+              <Text style={styles.selectButtonText}>
+                {rooms.find((r) => r._id === selectedRoom)?.name || "Chọn phòng..."}
+              </Text>
+              <ChevronDown size={14} color={COLORS.WhiteRGBA50} />
+            </TouchableOpacity>
+          </View>
 
-              {/* Room Selection */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Phòng chiếu *</Text>
+          {/* Date & Time */}
+          <View style={styles.formGroup}>
+            <View style={styles.dateTimeRow}>
+              <View style={styles.dateTimeItem}>
+                <Text style={styles.label}>Ngày chiếu *</Text>
                 <TouchableOpacity
                   style={styles.selectButton}
-                  onPress={() => setShowRoomPicker(true)}
+                  onPress={() => setShowDatePicker(true)}
                 >
-                  <DoorOpen size={20} color={COLORS.WhiteRGBA75} />
-                  <Text style={styles.selectButtonText}>
-                    {rooms.find((r) => r._id === selectedRoom)?.name || "Chọn phòng..."}
+                  <CalendarIcon size={16} color={COLORS.WhiteRGBA75} />
+                  <Text style={styles.selectButtonTextCompact}>
+                    {date || "Chọn..."}
                   </Text>
-                  <ChevronDown size={14} color={COLORS.WhiteRGBA50} />
+                  <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
                 </TouchableOpacity>
               </View>
 
-              {/* Date & Time - Single Row */}
-              <View style={styles.formGroup}>
-                <View style={styles.dateTimeRow}>
-                  <View style={styles.dateTimeItem}>
-                    <Text style={styles.label}>Ngày chiếu *</Text>
-                    <TouchableOpacity
-                      style={styles.selectButton}
-                      onPress={() => setShowDatePicker(true)}
-                    >
-                      <CalendarIcon size={16} color={COLORS.WhiteRGBA75} />
-                      <Text style={styles.selectButtonTextCompact}>
-                        {date || "Chọn..."}
-                      </Text>
-                      <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.dateTimeItem}>
-                    <Text style={styles.label}>Giờ chiếu *</Text>
-                    <TouchableOpacity
-                      style={styles.selectButton}
-                      onPress={() => setShowTimePicker(true)}
-                      disabled={!selectedRoom || !date}
-                    >
-                      <Clock size={16} color={COLORS.WhiteRGBA75} />
-                      <Text style={styles.selectButtonTextCompact}>
-                        {time || "Chọn..."}
-                      </Text>
-                      <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-
-              {/* Price */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Giá vé cơ bản (VNĐ) *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="75000"
-                  placeholderTextColor={COLORS.WhiteRGBA50}
-                  value={basePrice}
-                  onChangeText={setBasePrice}
-                  keyboardType="number-pad"
-                />
-              </View>
-
-              {/* Action Buttons */}
-              <View style={styles.actions}>
+              <View style={styles.dateTimeItem}>
+                <Text style={styles.label}>Giờ chiếu *</Text>
                 <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={onClose}
-                  disabled={loading}
+                  style={styles.selectButton}
+                  onPress={() => setShowTimePicker(true)}
+                  disabled={!selectedRoom || !date}
                 >
-                  <Text style={styles.cancelButtonText}>Hủy</Text>
+                  <Clock size={16} color={COLORS.WhiteRGBA75} />
+                  <Text style={styles.selectButtonTextCompact}>
+                    {time || "Chọn..."}
+                  </Text>
+                  <ChevronDown size={12} color={COLORS.WhiteRGBA50} />
                 </TouchableOpacity>
+              </View>
+            </View>
+          </View>
 
+          {/* Price */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Giá vé cơ bản (VNĐ) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="75000"
+              placeholderTextColor={COLORS.WhiteRGBA50}
+              value={basePrice}
+              onChangeText={setBasePrice}
+              keyboardType="number-pad"
+            />
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => navigation.goBack()}
+              disabled={loading}
+            >
+              <Text style={styles.cancelButtonText}>Hủy</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.createButton, loading && styles.buttonDisabled]}
+              onPress={handleCreate}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.White} />
+              ) : (
+                <>
+                  <Check size={16} color={COLORS.White} />
+                  <Text style={styles.createButtonText}>Tạo lịch</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Movie Picker Modal */}
+      <Modal
+        visible={showMoviePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMoviePicker(false)}
+      >
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerContent}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Chọn phim</Text>
+              <TouchableOpacity onPress={() => setShowMoviePicker(false)}>
+                <X size={24} color={COLORS.White} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={movies}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={[styles.button, styles.updateButton, loading && styles.buttonDisabled]}
-                  onPress={handleUpdate}
-                  disabled={loading}
+                  style={[
+                    styles.pickerItem,
+                    selectedMovie === item._id && styles.pickerItemSelected,
+                  ]}
+                  onPress={() => {
+                    setSelectedMovie(item._id);
+                    setShowMoviePicker(false);
+                  }}
                 >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.White} />
-                  ) : (
-                    <>
-                      <Check size={16} color={COLORS.White} />
-                      <Text style={styles.updateButtonText}>Cập nhật</Text>
-                    </>
+                  <Film
+                    size={20}
+                    color={selectedMovie === item._id ? COLORS.Orange : COLORS.WhiteRGBA75}
+                  />
+                  <Text
+                    style={[
+                      styles.pickerItemText,
+                      selectedMovie === item._id && styles.pickerItemTextSelected,
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                  {selectedMovie === item._id && (
+                    <Check size={18} color={COLORS.Orange} />
                   )}
                 </TouchableOpacity>
-              </View>
-            </ScrollView>
-          )}
+              )}
+            />
+          </View>
         </View>
-      </View>
+      </Modal>
 
       {/* Room Picker Modal */}
       <Modal
@@ -394,13 +443,12 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
-                    styles.roomItem,
-                    selectedRoom === item._id && styles.roomItemSelected,
+                    styles.pickerItem,
+                    selectedRoom === item._id && styles.pickerItemSelected,
                   ]}
                   onPress={() => {
                     setSelectedRoom(item._id);
                     setShowRoomPicker(false);
-                    // Reset time khi đổi phòng
                     setTime("");
                   }}
                 >
@@ -410,8 +458,8 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
                   />
                   <Text
                     style={[
-                      styles.roomItemText,
-                      selectedRoom === item._id && styles.roomItemTextSelected,
+                      styles.pickerItemText,
+                      selectedRoom === item._id && styles.pickerItemTextSelected,
                     ]}
                   >
                     {item.name}
@@ -448,7 +496,6 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
               onDayPress={(day: any) => {
                 setDate(day.dateString);
                 setShowDatePicker(false);
-                // Reset time khi đổi ngày
                 setTime("");
               }}
               markedDates={{
@@ -497,65 +544,61 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
             <FlatList
               data={getTimeSlotsWithAvailability()}
               keyExtractor={(item) => item.time}
-              renderItem={({ item }) => {
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.timeItem,
-                      !item.available && styles.timeItemDisabled,
-                      time === item.time && styles.timeItemSelected,
-                    ]}
-                    onPress={() => {
-                      if (item.available) {
-                        setTime(item.time);
-                        setShowTimePicker(false);
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.timeItem,
+                    !item.available && styles.timeItemDisabled,
+                    time === item.time && styles.timeItemSelected,
+                  ]}
+                  onPress={() => {
+                    if (item.available) {
+                      setTime(item.time);
+                      setShowTimePicker(false);
+                    }
+                  }}
+                  disabled={!item.available}
+                >
+                  <View style={styles.timeItemContent}>
+                    <Clock
+                      size={18}
+                      color={
+                        !item.available
+                          ? COLORS.WhiteRGBA25
+                          : time === item.time
+                          ? COLORS.Orange
+                          : COLORS.WhiteRGBA75
                       }
-                    }}
-                    disabled={!item.available}
-                  >
-                    <View style={styles.timeItemContent}>
-                      <Clock
-                        size={18}
-                        color={
-                          !item.available
-                            ? COLORS.WhiteRGBA25
-                            : time === item.time
-                            ? COLORS.Orange
-                            : COLORS.WhiteRGBA75
-                        }
-                      />
-                      <View style={styles.timeItemText}>
-                        <Text
-                          style={[
-                            styles.timeItemTime,
-                            !item.available && styles.timeItemTimeDisabled,
-                            time === item.time && styles.timeItemTextSelected,
-                          ]}
-                        >
-                          {item.range}
-                        </Text>
-                      </View>
+                    />
+                    <Text
+                      style={[
+                        styles.timeItemTime,
+                        !item.available && styles.timeItemTimeDisabled,
+                        time === item.time && styles.timeItemTextSelected,
+                      ]}
+                    >
+                      {item.range}
+                    </Text>
+                  </View>
+                  {item.available ? (
+                    <>
+                      {time === item.time ? (
+                        <Check size={18} color={COLORS.Orange} />
+                      ) : (
+                        <View style={styles.availableBadge}>
+                          <CheckCircle size={14} color={COLORS.Green} />
+                          <Text style={styles.availableBadgeText}>Khả dụng</Text>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <View style={styles.unavailableBadge}>
+                      <XCircle size={14} color={COLORS.Red} />
+                      <Text style={styles.unavailableBadgeText}>Đã có lịch</Text>
                     </View>
-                    {item.available ? (
-                      <>
-                        {time === item.time ? (
-                          <Check size={18} color={COLORS.Orange} />
-                        ) : (
-                          <View style={styles.availableBadge}>
-                            <CheckCircle size={14} color={COLORS.Green} />
-                            <Text style={styles.availableBadgeText}>Khả dụng</Text>
-                          </View>
-                        )}
-                      </>
-                    ) : (
-                      <View style={styles.unavailableBadge}>
-                        <XCircle size={14} color={COLORS.Red} />
-                        <Text style={styles.unavailableBadgeText}>Đã có lịch</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
+                  )}
+                </TouchableOpacity>
+              )}
             />
           </View>
         </View>
@@ -569,90 +612,57 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
         message={infoDialog.message}
         onClose={() => setInfoDialog({ ...infoDialog, visible: false })}
       />
-    </Modal>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    backgroundColor: COLORS.Black,
+  },
+  keyboardContainer: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: SPACING.space_16,
   },
-  modalContainer: {
-    width: isWeb ? "85%" : "100%",
-    maxWidth: isWeb ? 900 : 500,
-    maxHeight: SCREEN_HEIGHT * 0.9,
-    backgroundColor: COLORS.Black,
-    borderRadius: BORDER_RADIUS.radius_20,
-    borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA15,
-    overflow: "hidden",
+  loadingText: {
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_14,
+    color: COLORS.White,
+    marginTop: SPACING.space_12,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: SPACING.space_20,
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_20,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.WhiteRGBA15,
-    backgroundColor: COLORS.DarkGrey,
+  },
+  backButton: {
+    padding: SPACING.space_4,
   },
   headerTitle: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_18,
     color: COLORS.White,
+    flex: 1,
+    textAlign: "center",
   },
-  closeButton: {
-    padding: SPACING.space_4,
-  },
-  loadingContainer: {
-    padding: SPACING.space_48,
-    alignItems: "center",
-    justifyContent: "center",
+  placeholder: {
+    width: 32,
   },
   scrollView: {
     flex: 1,
-    padding: isWeb ? SPACING.space_32 : SPACING.space_20,
-  },
-  movieInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.space_12,
-    backgroundColor: COLORS.Orange + "20",
-    borderRadius: BORDER_RADIUS.radius_12,
-    padding: SPACING.space_16,
-    marginBottom: SPACING.space_20,
-    borderWidth: 1,
-    borderColor: COLORS.Orange + "40",
-  },
-  movieTitle: {
-    flex: 1,
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_16,
-    color: COLORS.White,
+    padding: SPACING.space_24,
   },
   formGroup: {
     marginBottom: SPACING.space_20,
-  },
-  row: {
-    flexDirection: "row",
-    gap: SPACING.space_12,
-  },
-  dateTimeRow: {
-    flexDirection: "row",
-    gap: SPACING.space_8,
-  },
-  dateTimeItem: {
-    flex: 1,
-  },
-  selectButtonTextCompact: {
-    flex: 1,
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.White,
   },
   label: {
     fontFamily: FONT_FAMILY.poppins_medium,
@@ -686,6 +696,19 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
   },
+  dateTimeRow: {
+    flexDirection: "row",
+    gap: SPACING.space_8,
+  },
+  dateTimeItem: {
+    flex: 1,
+  },
+  selectButtonTextCompact: {
+    flex: 1,
+    fontFamily: FONT_FAMILY.poppins_regular,
+    fontSize: FONT_SIZE.size_12,
+    color: COLORS.White,
+  },
   actions: {
     flexDirection: "row",
     gap: SPACING.space_12,
@@ -709,10 +732,10 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
   },
-  updateButton: {
+  createButton: {
     backgroundColor: COLORS.Orange,
   },
-  updateButtonText: {
+  createButtonText: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_14,
     color: COLORS.White,
@@ -720,7 +743,7 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
-  // Room Picker Modal
+  // Picker Modal
   pickerOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -730,7 +753,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.Black,
     borderTopLeftRadius: BORDER_RADIUS.radius_24,
     borderTopRightRadius: BORDER_RADIUS.radius_24,
-    maxHeight: isWeb ? "80%" : "70%",
+    maxHeight: "70%",
     borderWidth: 1,
     borderColor: COLORS.WhiteRGBA15,
   },
@@ -759,7 +782,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.size_18,
     color: COLORS.White,
   },
-  roomItem: {
+  pickerItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: SPACING.space_12,
@@ -767,53 +790,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.WhiteRGBA10,
   },
-  roomItemSelected: {
+  pickerItemSelected: {
     backgroundColor: COLORS.Orange + "20",
   },
-  roomItemText: {
+  pickerItemText: {
     flex: 1,
     fontFamily: FONT_FAMILY.poppins_regular,
     fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
   },
-  roomItemTextSelected: {
+  pickerItemTextSelected: {
     fontFamily: FONT_FAMILY.poppins_semibold,
-    color: COLORS.Orange,
-  },
-  // Date Picker
-  dateItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: SPACING.space_16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.WhiteRGBA10,
-  },
-  dateItemSelected: {
-    backgroundColor: COLORS.Orange + "20",
-  },
-  dateItemContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.space_12,
-    flex: 1,
-  },
-  dateItemText: {
-    flex: 1,
-  },
-  dateItemDay: {
-    fontFamily: FONT_FAMILY.poppins_semibold,
-    fontSize: FONT_SIZE.size_14,
-    color: COLORS.White,
-    textTransform: "capitalize",
-  },
-  dateItemDate: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.WhiteRGBA75,
-    marginTop: SPACING.space_2,
-  },
-  dateItemTextSelected: {
     color: COLORS.Orange,
   },
   // Time Picker
@@ -834,25 +821,13 @@ const styles = StyleSheet.create({
     gap: SPACING.space_12,
     flex: 1,
   },
-  timeItemText: {
-    flex: 1,
-  },
   timeItemTime: {
     fontFamily: FONT_FAMILY.poppins_semibold,
     fontSize: FONT_SIZE.size_16,
     color: COLORS.White,
   },
-  timeItemLabel: {
-    fontFamily: FONT_FAMILY.poppins_regular,
-    fontSize: FONT_SIZE.size_12,
-    color: COLORS.WhiteRGBA75,
-    marginTop: SPACING.space_2,
-  },
   timeItemTextSelected: {
     color: COLORS.Orange,
-  },
-  timeItemLabelSelected: {
-    color: COLORS.Orange + "CC",
   },
   timeItemDisabled: {
     backgroundColor: COLORS.WhiteRGBA10,
@@ -891,4 +866,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditScheduleModal;
+export default AdminCreateScheduleScreen;

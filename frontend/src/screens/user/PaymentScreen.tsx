@@ -20,15 +20,15 @@ import {
   Check,
   Calendar
 } from "lucide-react-native";
-import { getToken } from "../utils/storage";
+import { getToken } from "../../utils/storage";
 import {
   COLORS,
   SPACING,
   FONT_FAMILY,
   FONT_SIZE,
   BORDER_RADIUS,
-} from "../theme/theme";
-import InfoDialog from "../components/InfoDialog";
+} from "../../theme/theme";
+import InfoDialog from "../../components/InfoDialog";
 
 const PaymentScreen = ({ navigation, route }: any) => {
   const { scheduleId, movieData, schedule, selectedSeats, totalPrice } =
@@ -246,7 +246,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
       // 3. Gọi API Đặt vé (Cho cả Cash và Bank đã thanh toán thành công)
       console.log('🏦 [SePay] Creating booking...');
-      const { bookingApi } = await import("../api/bookingApi");
+      const { bookingApi } = await import("../../api/bookingApi");
 
       const result = await bookingApi.createBooking({
         scheduleId,

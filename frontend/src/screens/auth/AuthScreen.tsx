@@ -16,9 +16,9 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { loginUser, registerUser } from '../service/auth.service';
-import { useUser } from '../context/UserContext';
-import { saveToken, saveUserData } from '../utils/storage';
+import { loginUser, registerUser } from '../../service/auth.service';
+import { useUser } from '../../context/UserContext';
+import { saveToken, saveUserData } from '../../utils/storage';
 
 const AuthScreen = () => {
   const navigation = useNavigation<any>();

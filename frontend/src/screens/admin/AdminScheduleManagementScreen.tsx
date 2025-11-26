@@ -22,16 +22,16 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
+} from "../../theme/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useUser } from "../context/UserContext";
-import { scheduleApi, roomApi } from "../api/adminApi";
+import { useUser } from "../../context/UserContext";
+import { scheduleApi, roomApi } from "../../api/adminApi";
 import CreateRoomModal from "./CreateRoomScreen";
 import EditRoomModal from "./EditRoomScreen";
 import EditScheduleModal from "./EditScheduleModal";
-import SeatMapPreview, { RoomSize } from "../components/SeatMapPreview";
-import ConfirmDialog from "../components/ConfirmDialog";
+import SeatMapPreview, { RoomSize } from "../../components/SeatMapPreview";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const AdminScheduleManagementScreen = ({ navigation }: any) => {
   const { user } = useUser();

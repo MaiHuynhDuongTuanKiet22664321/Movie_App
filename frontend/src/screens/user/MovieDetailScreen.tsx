@@ -12,24 +12,25 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
+import React from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { baseImagePath, movieCastDetails, movieDetails, movieImages } from "../api/apicall";
+import { baseImagePath, movieCastDetails, movieDetails, movieImages } from "../../api/apicall";
 import {
   BORDER_RADIUS,
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import MovieDetailsHeader from "../components/MovieDetailsHeader";
+} from "../../theme/theme";
+import MovieDetailsHeader from "../../components/MovieDetailsHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import CategoryHeader from "../components/CategogyHeader";
-import CastCard from "../components/CastCard";
+import CategoryHeader from "../../components/CategogyHeader";
+import CastCard from "../../components/CastCard";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useUser } from "../context/UserContext";
-import { checkMovieExists } from "../service/movie.service";
+import { useUser } from "../../context/UserContext";
+import { checkMovieExists } from "../../service/movie.service";
 
 const getMovieDetails = async (id: number) => {
   try {

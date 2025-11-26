@@ -21,10 +21,10 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   SPACING,
-} from "../theme/theme";
-import { movieApi } from "../api/adminApi";
-import { baseImagePath } from "../api/apicall";
-import ConfirmDialog from "../components/ConfirmDialog";
+} from "../../theme/theme";
+import { movieApi } from "../../api/adminApi";
+import { baseImagePath } from "../../api/apicall";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const AdminMovieManagementScreen = () => {
   const navigation = useNavigation<any>(); // Sử dụng navigation
